@@ -67,7 +67,7 @@ languages_to_process = ['am', 'uz', 'su', 'cy', 'mr', 'te', 'ku', 'mk', 'bn', 'k
              'ug', 'bo', 'mt', 'jv', 'ne', 'ms', 'bg']
 
 # Load the data
-with open(f"conceptnet.json") as f:
+with open(f"/netscratch/dgurgurov/thesis/data/conceptnet/conceptnet.json") as f:
     data = json.load(f)
 
 # Process only the languages in the specified list
@@ -77,16 +77,19 @@ for language in languages_to_process:
         cn_triples = load_conceptnet_data({language: data[language]})
         cn_sents = construct_sentences(cn_triples)
 
-        # Split the sentences into training and validation sets
-        train_sents, validation_sents = train_test_split(cn_sents, test_size=0.1, random_state=42)
+        # Split the sentences into 80% training, 10% validation, 10% test sets
+        train_sents, temp_sents = train_test_split(cn_sents, test_size=0.2, random_state=42)
+        val_sents, test_sents = train_test_split(temp_sents, test_size=0.5, random_state=42)
 
         # Create DataFrames
         train_df = pd.DataFrame(train_sents, columns=["text"])
-        val_df = pd.DataFrame(validation_sents, columns=["text"])
+        val_df = pd.DataFrame(val_sents, columns=["text"])
+        test_df = pd.DataFrame(test_sents, columns=["text"])
 
         # Save the data into CSV files
-        train_df.to_csv(f"data/train_cn_{language}.csv", index=False)
-        val_df.to_csv(f"data/val_cn_{language}.csv", index=False)
+        train_df.to_csv(f"/netscratch/dgurgurov/thesis/data/conceptnet/train_cn_{language}.csv", index=False)
+        val_df.to_csv(f"/netscratch/dgurgurov/thesis/data/conceptnet/val_cn_{language}.csv", index=False)
+        test_df.to_csv(f"/netscratch/dgurgurov/thesis/data/conceptnet/test_cn_{language}.csv", index=False)
 
         print(f"Processed language: {language}, Number of triples: {len(cn_triples)}")
     else:
