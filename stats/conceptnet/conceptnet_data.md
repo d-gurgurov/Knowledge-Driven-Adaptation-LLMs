@@ -1,0 +1,32 @@
+| Language Code   | Language Name   | Language Family   |   Train Sentences |   Train Size (MB) |   Val Sentences |   Val Size (MB) |   Test Sentences |   Test Size (MB) |
+|:----------------|:----------------|:------------------|------------------:|------------------:|----------------:|----------------:|-----------------:|-----------------:|
+| bg              | Bulgarian       | Indo-European     |            162288 |              5.47 |           20286 |            0.68 |            20286 |             0.68 |
+| ms              | Indonesian      | Austronesian      |             69240 |              2.05 |            8655 |            0.26 |             8655 |             0.26 |
+| ne              | Nepali          | Indo-European     |              4456 |              0.18 |             557 |            0.02 |              558 |             0.02 |
+| jv              | Javanese        | Austronesian      |              3538 |              0.12 |             442 |            0.02 |              443 |             0.02 |
+| mt              | Maltese         | Afro-Asiatic      |              3905 |              0.12 |             488 |            0.02 |              489 |             0.02 |
+| bo              | Tibetan         | Sino-Tibetan      |              4768 |              0.15 |             596 |            0.02 |              597 |             0.02 |
+| ug              | Uyghur          | Turkic            |              1716 |              0.05 |             214 |            0.01 |              215 |             0.01 |
+| sw              | Swahili         | Niger-Congo       |             12509 |              0.35 |            1564 |            0.04 |             1564 |             0.04 |
+| yo              | Yoruba          | Niger-Congo       |              1061 |              0.04 |             133 |            0.01 |              133 |             0.01 |
+| si              | Sinhala         | Indo-European     |              1782 |              0.1  |             223 |            0.01 |              223 |             0.01 |
+| ur              | Urdu            | Indo-European     |             13318 |              0.46 |            1665 |            0.06 |             1665 |             0.06 |
+| da              | Danish          | Indo-European     |             63459 |              1.9  |            7932 |            0.24 |             7933 |             0.24 |
+| ro              | Romanian        | Indo-European     |             71353 |              2.21 |            8919 |            0.27 |             8920 |             0.28 |
+| he              | Hebrew          | Afro-Asiatic      |             37696 |              1.36 |            4712 |            0.17 |             4712 |             0.17 |
+| sl              | Slovenian       | Indo-European     |             86316 |              2.47 |           10789 |            0.31 |            10790 |             0.31 |
+| lv              | Latvian         | Indo-European     |             66608 |              2.09 |            8326 |            0.26 |             8326 |             0.26 |
+| az              | Azerbaijani     | Turkic            |             15294 |              0.54 |            1912 |            0.07 |             1912 |             0.07 |
+| th              | Thai            | Kra-Dai           |             49544 |              1.87 |            6193 |            0.24 |             6193 |             0.23 |
+| el              | Greek           | Indo-European     |             89100 |              3.15 |           11137 |            0.39 |            11138 |             0.4  |
+| sk              | Slovak          | Indo-European     |             23269 |              0.76 |            2909 |            0.09 |             2909 |             0.09 |
+| ka              | Georgian        | Kartvelian        |             35367 |              1.39 |            4421 |            0.18 |             4421 |             0.17 |
+| bn              | Bengali         | Indo-European     |              8782 |              0.42 |            1098 |            0.05 |             1098 |             0.05 |
+| mk              | Macedonian      | Indo-European     |             38146 |              1.14 |            4768 |            0.14 |             4769 |             0.14 |
+| ku              | Kurdish         | Indo-European     |             12284 |              0.4  |            1535 |            0.05 |             1536 |             0.05 |
+| te              | Telugu          | Dravidian         |             33473 |              1.27 |            4184 |            0.16 |             4185 |             0.16 |
+| mr              | Marathi         | Indo-European     |              7232 |              0.35 |             904 |            0.04 |              904 |             0.04 |
+| cy              | Welsh           | Indo-European     |             18577 |              0.56 |            2322 |            0.07 |             2323 |             0.07 |
+| su              | Sundanese       | Austronesian      |              1893 |              0.06 |             237 |            0.01 |              237 |             0.01 |
+| uz              | Uzbek           | Turkic            |              4461 |              0.16 |             558 |            0.02 |              558 |             0.02 |
+| am              | Amharic         | Afro-Asiatic      |              1814 |              0.07 |             227 |            0.01 |              227 |             0.01 |
