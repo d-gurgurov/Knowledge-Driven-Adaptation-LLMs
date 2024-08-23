@@ -31,7 +31,7 @@ class PseudoPerplexity(Metric):
 
         pseudo_perplexities: list[float] = []
         for sentence in tqdm(sentences, desc="Computing pseudo-perplexity"):
-            tokenized_sentence: torch.Tensor = self.tokenizer.encode(sentence, return_tensors="pt").to(self.device)  # Move input to GPU
+            tokenized_sentence: torch.Tensor = self.tokenizer.encode(sentence, return_tensors="pt", truncation=True, max_length=512).to(self.device)  # Move input to GPU
             num_tokens = tokenized_sentence.shape[-1]
 
             pseudo_log_likelihood = self.pseudo_log_likelihood(tokenized_sentence)
@@ -73,21 +73,24 @@ def compute_pseudo_perplexity_from_csv(model_name: str, csv_file: str, column_na
     """
     # Set the random seed for reproducibility
     random.seed(seed)
+    torch.manual_seed(seed)
 
     # Load the CSV file
     df = pd.read_csv(csv_file)
+    df = df.dropna()
 
     # Initialize the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    # Filter sentences that are longer than 512 tokens
-    filtered_sentences = [
-        sentence for sentence in df[column_name].tolist()
-        if len(tokenizer.encode(sentence, add_special_tokens=True)) <= 512
-    ]
+    # Filter sentences and ensure they are within the model's maximum sequence length
+    filtered_sentences = df[column_name].tolist()
+
+    # Sort the filtered sentences to ensure consistency before sampling
+    filtered_sentences.sort()
 
     # Sample a subset of sentences
     if len(filtered_sentences) > num_sentences:
+        random.seed(seed)  # Reset the seed before sampling
         sentences = random.sample(filtered_sentences, num_sentences)
     else:
         sentences = filtered_sentences
@@ -114,26 +117,27 @@ def compute_pseudo_perplexity_from_csv(model_name: str, csv_file: str, column_na
 
     return results['average']
 
-if __name__ == "__main__":
-    language_codes_glot500 = ['amh_Ethi', 'uzb_Latn', 'sun_Latn', 'cym_Latn', 'mar_Deva', 
-                              'kur_Arab', 'mkd_Cyrl', 'kat_Geor', 'slk_Latn', 'ell_Grek', 
-                              'tha_Thai', 'aze_Latn', 'lvs_Latn', 'slv_Latn', 'heb_Hebr', 
-                              'ron_Latn', 'dan_Latn', 'urd_Arab', 'sin_Sinh', 'yor_Latn', 
-                              'swa_Latn', 'uig_Arab', 'bod_Tibt', 'mlt_Latn', 'jav_Latn', 
-                              'nep_Deva', 'msa_Latn', 'bul_Cyrl', 'tel-Telu', 'ben-Beng']
 
-    model_name = "FacebookAI/xlm-roberta-base"  # Example model google-bert/bert-base-multilingual-cased
+if __name__ == "__main__":
+    language_codes_glot500 = ['mlt_Latn', 'amh_Ethi', 'uzb_Latn', 'sun_Latn', 'cym_Latn', 'mar_Deva', 
+                            'kur_Arab', 'mkd_Cyrl', 'kat_Geor', 'slk_Latn', 'ell_Grek', 
+                            'tha_Thai', 'aze_Latn', 'lvs_Latn', 'slv_Latn', 'heb_Hebr', 
+                            'ron_Latn', 'dan_Latn', 'urd_Arab', 'sin_Sinh', 'yor_Latn', 
+                            'swa_Latn', 'uig_Arab', 'bod_Tibt', 'jav_Latn', 
+                            'nep_Deva', 'msa_Latn', 'bul_Cyrl', 'tel-Telu', 'ben-Beng']
+
+    model_name = "google-bert/bert-base-multilingual-cased"  # Example model google-bert/bert-base-multilingual-cased FacebookAI/xlm-roberta-base
     results_summary = []
 
     for language_code in language_codes_glot500:
         csv_file = f"/netscratch/dgurgurov/thesis/data/glot/test_glot_{language_code}.csv" 
-        output_file = f"/netscratch/dgurgurov/thesis/results/glot/xlm-r/{language_code}_pseudo_perplexity_results.csv" 
+        output_file = f"/netscratch/dgurgurov/thesis/results/glot/mbert/{language_code}_pseudo_perplexity_results.csv" 
         average_pseudo_perplexity = compute_pseudo_perplexity_from_csv(model_name, csv_file, "text", output_file)
         results_summary.append({"language_code": language_code, "average_pseudo_perplexity": average_pseudo_perplexity})
 
     # Save the summary of average pseudo-perplexities for all languages
     results_df = pd.DataFrame(results_summary)
-    summary_output_file = "/netscratch/dgurgurov/thesis/results/glot/xlm-r/average_pseudo_perplexities_summary.csv"
+    summary_output_file = "/netscratch/dgurgurov/thesis/results/glot/mbert/average_pseudo_perplexities_summary.csv"
     results_df.to_csv(summary_output_file, index=False)
 
     print(f"Summary of average pseudo-perplexities saved to {summary_output_file}.")
