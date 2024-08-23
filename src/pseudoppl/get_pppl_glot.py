@@ -77,10 +77,7 @@ def compute_pseudo_perplexity_from_csv(model_name: str, csv_file: str, column_na
 
     # Load the CSV file
     df = pd.read_csv(csv_file)
-    df = df.dropna()
-
-    # Initialize the tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    df = df.dropna(subset=[column_name])
 
     # Filter sentences and ensure they are within the model's maximum sequence length
     filtered_sentences = df[column_name].tolist()
