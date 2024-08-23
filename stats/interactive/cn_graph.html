@@ -5,12 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Language Network Graphs</title>
     <style>
-        body {
+        body, html {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
             background-color: #f5f5f5;
         }
+        #mainContainer {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #overviewGraph {
+            flex-grow: 1;
+            width: 100%;
+        }
+        #languageSpecificContent {
+            display: none;
+            padding: 20px;
+        }
         svg {
+            width: 100%;
+            height: 100%;
             border: 1px solid #ddd;
             background-color: #fff;
         }
@@ -25,58 +44,65 @@
             font-size: 12px;
             fill: #333;
         }
-        .link path {
+        .link {
             fill: none;
-            stroke-width: 2px;
+            stroke: #999;
+            stroke-opacity: 0.6;
         }
         #plots {
             display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
+            flex-direction: column; /* Stack plots vertically */
+            overflow: auto; /* Allow both vertical and horizontal scrolling */
+            padding: 20px; /* Add padding */
+            box-sizing: border-box; /* Include padding in the total width and height */
         }
         .plot-container {
-            margin: 20px;
+            margin: 10px;
             padding: 10px;
             background-color: #fff;
             border: 1px solid #ddd;
         }
+        .graph-container {
+            width: 100%;
+            height: 700px;  /* Adjust based on your layout */
+            overflow: hidden;
+            position: relative;
+        }
         .bar {
             fill: steelblue;
-            stroke: #fff;
-            stroke-width: 1px;
         }
         .axis-label {
             font-size: 12px;
             fill: #333;
         }
-        .axis path, .axis line {
-            fill: none;
-            shape-rendering: crispEdges;
-        }
         .num-triples {
             font-size: 16px;
             font-weight: bold;
+            margin: 10px 0;
+        }
+        #backButton {
             margin-bottom: 20px;
         }
     </style>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
+    <div id="mainContainer">
+        <div id="overviewGraph"></div>
+        <div id="languageSpecificContent">
+            <button id="backButton">Back to Overview</button>
+            <h1>Language Network Graphs</h1>
+            <label for="languageSelect">Choose a language:</label>
+            <select id="languageSelect">
+                <option value="">--Select a language--</option>
+            </select>
+            <div id="plots"></div>
+            <div id="graphs"></div>
+        </div>
+    </div>
 
-<h1>Language Network Graphs</h1>
-
-<label for="languageSelect">Choose a language:</label>
-<select id="languageSelect">
-    <option value="">--Select a language--</option>
-    <!-- Options will be dynamically filled -->
-</select>
-
-<div id="plots"></div>
-<div id="graphs"></div>
 
 <script>
-    // languageData.js
-
 const languageData = {
     "ab": {
         "num_triples": 470,
@@ -16944,268 +16970,418 @@ const languageData = {
     }
 };
 
-    const languageSelect = document.getElementById("languageSelect");
-    const plotsContainer = document.getElementById("plots");
-    const graphsContainer = document.getElementById("graphs");
+function createOverviewGraph() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-    // Populate the language dropdown
-    for (const lang in languageData) {
-        const option = document.createElement("option");
-        option.value = lang;
-        option.textContent = lang;
-        languageSelect.appendChild(option);
-    }
+    // Define the zoom behavior
+    const zoom = d3.zoom()
+        .scaleExtent([0.001, 200])
+        .on("zoom", zoomed);
 
-    function createPlots(langData, langName) {
-        plotsContainer.innerHTML = ""; // Clear previous plots
+    const svg = d3.select("#overviewGraph").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .call(zoom);
 
-        const width = 400;
-        const height = 300;
-        const margin = { top: 30, right: 20, bottom: 100, left: 40 };
+    const container = svg.append("g");
 
-        // Display number of triples
-        const triplesDiv = document.createElement('div');
-        triplesDiv.className = 'num-triples';
-        triplesDiv.textContent = `Number of Triples: ${langData.num_triples}`;
-        plotsContainer.appendChild(triplesDiv);
+    const nodes = Object.entries(languageData).map(([lang, data]) => ({
+        id: lang,
+        numTriples: data.num_triples
+    }));
 
-        // Create bar chart for unique relationships
-        const relationshipData = Object.entries(langData.unique_relationships).map(([key, value]) => ({ label: key, value }));
-        const relationshipsSvg = d3.select(plotsContainer).append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
+    // Initialize simulation
+    const simulation = d3.forceSimulation(nodes)
+        .force("charge", d3.forceManyBody().strength(-50))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(d => Math.sqrt(d.numTriples) / 2 + 2));
 
-        const x1 = d3.scaleBand()
-            .domain(relationshipData.map(d => d.label))
-            .range([0, width])
-            .padding(0.1);
+    const node = container.append("g")
+        .selectAll("g")
+        .data(nodes)
+        .enter().append("g")
+        .on("click", handleNodeClick)
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", handleMouseOut)
+        .call(drag(simulation));
 
-        const y1 = d3.scaleLinear()
-            .domain([0, d3.max(relationshipData, d => d.value)]).nice()
-            .range([height, 0]);
+    node.append("circle")
+        .attr("r", d => Math.sqrt(d.numTriples) / 2)
+        .attr("fill", "#69b3a2");
 
-        relationshipsSvg.append("g")
-            .selectAll(".bar")
-            .data(relationshipData)
-            .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", d => x1(d.label))
-            .attr("y", d => y1(d.value))
-            .attr("width", x1.bandwidth())
-            .attr("height", d => height - y1(d.value));
+    node.append("text")
+        .text(d => d.id)
+        .attr('x', 6)
+        .attr('y', 3);
 
-        // X-axis with rotated labels
-        relationshipsSvg.append("g")
-            .attr("class", "x-axis axis")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x1).tickSize(0))
-            .selectAll(".tick text")
-            .attr("class", "axis-label")
-            .attr("transform", "rotate(-45)")
-            .attr("text-anchor", "end")
-            .attr("dx", "-0.8em")
-            .attr("dy", "0.15em");
-
-        relationshipsSvg.append("g")
-            .attr("class", "y-axis axis")
-            .call(d3.axisLeft(y1))
-            .selectAll(".tick text")
-            .attr("class", "axis-label");
-
-
-        // Create bar chart for connected languages
-        const connectedLangData = Object.entries(langData.connected_languages).map(([key, value]) => ({ label: key, value }));
-        const connectedLangSvg = d3.select(plotsContainer).append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        const x2 = d3.scaleBand()
-            .domain(connectedLangData.map(d => d.label))
-            .range([0, width])
-            .padding(0.1);
-
-        const y2 = d3.scaleLinear()
-            .domain([0, d3.max(connectedLangData, d => d.value)]).nice()
-            .range([height, 0]);
-
-        connectedLangSvg.append("g")
-            .selectAll(".bar")
-            .data(connectedLangData)
-            .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", d => x2(d.label))
-            .attr("y", d => y2(d.value))
-            .attr("width", x2.bandwidth())
-            .attr("height", d => height - y2(d.value));
-
-        connectedLangSvg.append("g")
-            .attr("class", "x-axis axis")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x2).tickSize(0))
-            .selectAll(".tick text")
-            .attr("class", "axis-label");
-
-        connectedLangSvg.append("g")
-            .attr("class", "y-axis axis")
-            .call(d3.axisLeft(y2))
-            .selectAll(".tick text")
-            .attr("class", "axis-label");
-    }
-
-    function createGraph(langData, langName) {
-        const container = document.createElement("div");
-        container.className = "graph-container";
-        container.innerHTML = `<h2>Interactive Graph for ${langName}</h2>`;
-
-        const svg = d3.select(container).append("svg")
-            .attr("width", 1100)  // Increased width
-            .attr("height", 700); // Increased height
-
-        const graphData = {
-            nodes: [],
-            links: []
-        };
-
-        // Add the main language node
-        graphData.nodes.push({ id: langName, x: 150, y: 300 }); // Set initial position for main node
-
-        // Add connected languages as nodes and links
-        let i = 0;
-        for (const [targetLang, count] of Object.entries(langData.connected_languages)) {
-            if (!graphData.nodes.some(node => node.id === targetLang)) {
-                // Add target language node if not already present
-                graphData.nodes.push({ id: targetLang, x: 600, y: 300 + (i * 60) }); // Set initial position for connected nodes
-                i++;
-            }
-
-            // Add link from main node to target language
-            graphData.links.push({ source: langName, target: targetLang, value: count });
-        }
-
-        // Add a node for the self-loop
-        if (langData.connected_languages[langName]) {
-            graphData.nodes.push({ id: `${langName}*`, x: 150, y: 370 }); // Set initial position for duplicate main node
-            graphData.links.push({ source: langName, target: `${langName}*`, value: langData.connected_languages[langName] });
-        }
-
-        // Set up the force simulation
-        const simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(d => 320 + Math.log(d.value + 1) * 20))
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("x", d3.forceX().x(d => d.id === langName ? 150 : 600))
-            .force("y", d3.forceY().y(300))
-            .force("collide", d3.forceCollide().radius(60));  // Increased radius to avoid overlap
-
-        // Add links (curved lines) to the SVG
-        const link = svg.append("g")
-            .attr("class", "links")
-            .selectAll("path")
-            .data(graphData.links)
-            .enter().append("path")
-            .attr("stroke", "#666")
-            .attr("stroke-width", d => Math.sqrt(d.value) * 1) // Make lines thicker
-            .attr("fill", "none")
-            .attr("stroke-linejoin", "round")
-            .attr("stroke-linecap", "round");
-
-        // Add nodes (circles) to the SVG
-        const node = svg.append("g")
-            .attr("class", "nodes")
-            .selectAll("circle")
-            .data(graphData.nodes)
-            .enter().append("circle")
-            .attr("r", 10) // Increase size of nodes
-            .attr("fill", "#1f77b4") // Change color
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 2)
-            .call(drag(simulation));
-
-        // Add labels to the nodes
-        const label = svg.append("g")
-            .attr("class", "labels")
-            .selectAll("text")
-            .data(graphData.nodes)
-            .enter().append("text")
-            .attr("dx", 15)
-            .attr("dy", ".35em")
-            .text(d => d.id);
-
-        // Handle the simulation "tick" event to update node and link positions
-        simulation.on("tick", () => {
-            link
-                .attr("d", d => {
-                    const dx = d.target.x - d.source.x;
-                    const dy = d.target.y - d.source.y;
-                    const dr = Math.sqrt(dx * dx + dy * dy);
-                    const drAdjusted = dr + 20;
-                    return `M${d.source.x},${d.source.y}A${drAdjusted},${drAdjusted} 0 0,1 ${d.target.x},${d.target.y}`;
-                });
-
-            node
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y);
-
-            label
-                .attr("x", d => d.x)
-                .attr("y", d => d.y);
-        });
-
-        // Drag event handlers
-        function drag(simulation) {
-            function dragstarted(event, d) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-
-            function dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-
-            function dragended(event, d) {
-                if (!event.active) simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }
-
-            return d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended);
-        }
-
-        // Highlight connections on hover
-        node.on("mouseover", function(event, d) {
-            link.style("stroke-opacity", o => (o.source === d || o.target === d) ? 1 : 0.2);
-            node.style("fill-opacity", o => (o === d || o === o.source || o === o.target) ? 1 : 0.6);
-        });
-
-        node.on("mouseout", function() {
-            link.style("stroke-opacity", 0.6);
-            node.style("fill-opacity", 1);
-        });
-
-        return container;
-    }
-
-    languageSelect.addEventListener("change", function() {
-        const selectedLang = this.value;
-        if (selectedLang) {
-            const langData = languageData[selectedLang];
-            createPlots(langData, selectedLang); // Create plots before graph
-            graphsContainer.innerHTML = ""; // Clear previous graphs
-            const graphContainer = createGraph(langData, selectedLang);
-            graphsContainer.appendChild(graphContainer);
-        } else {
-            plotsContainer.innerHTML = "";
-            graphsContainer.innerHTML = "";
-        }
+    simulation.on("tick", () => {
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
+
+    function handleNodeClick(event, d) {
+        d3.select("#overviewGraph").style("display", "none");
+        d3.select("#languageSpecificContent").style("display", "block");
+        document.getElementById("languageSelect").value = d.id;
+        showLanguageSpecificData(d.id);
+    }
+
+    function handleMouseOver(event, d) {
+        d3.select(this).select("circle")
+            .attr("fill", "#ff5722");
+    }
+
+    function handleMouseOut(event, d) {
+        d3.select(this).select("circle")
+            .attr("fill", "#69b3a2");
+    }
+
+    function drag(simulation) {
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        return d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+    }
+
+    function zoomed(event) {
+        container.attr("transform", event.transform);
+    }
+
+    // Calculate the bounding box of the nodes
+    const nodeBounds = nodes.reduce((acc, node) => {
+        const radius = Math.sqrt(node.numTriples) / 2;
+        return {
+            x1: Math.min(acc.x1, node.x - radius),
+            y1: Math.min(acc.y1, node.y - radius),
+            x2: Math.max(acc.x2, node.x + radius),
+            y2: Math.max(acc.y2, node.y + radius)
+        };
+    }, { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity });
+
+    const bboxWidth = nodeBounds.x2 - nodeBounds.x1;
+    const bboxHeight = nodeBounds.y2 - nodeBounds.y1;
+
+    // Compute the initial scale and translation
+    const scale = Math.min(width / bboxWidth, height / bboxHeight) * 0.1; // Adjust scale factor as needed
+    const translateX = (width - bboxWidth * scale) / 2 - nodeBounds.x1 * scale;
+    const translateY = (height - bboxHeight * scale) / 2 - nodeBounds.y1 * scale;
+
+    // Apply the initial zoom transformation
+    svg.call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+}
+
+function createPlots(langData, langName) {
+    const plotsContainer = document.getElementById("plots");
+    plotsContainer.innerHTML = ""; // Clear previous plots
+
+    const baseWidth = 800; // Increased base width for better visibility
+    const baseHeight = 400; // Increased base height
+    const margin = { top: 30, right: 20, bottom: 100, left: 60 };
+
+    // Display number of triples
+    const triplesDiv = document.createElement('div');
+    triplesDiv.className = 'num-triples';
+    triplesDiv.textContent = `Number of Triples: ${langData.num_triples}`;
+    plotsContainer.appendChild(triplesDiv);
+
+    // Create and append the plots
+    createBarChart(plotsContainer, langData.unique_relationships, "Unique Relationships", baseWidth, baseHeight, margin);
+    createBarChart(plotsContainer, langData.connected_languages, "Connected Languages", baseWidth, baseHeight, margin);
+
+    // Adjust the height of the container to fit all plots
+    plotsContainer.style.height = `${(baseHeight + margin.top + margin.bottom) * 2}px`; // Ensure space for all plots
+}
+
+function createBarChart(container, data, title, baseWidth, baseHeight, margin) {
+    // Convert data to an array of objects and sort it by value in descending order
+    const dataEntries = Object.entries(data)
+        .map(([key, value]) => ({ label: key, value }))
+        .sort((a, b) => b.value - a.value); // Sort by value in descending order
+
+    // Compute the width based on the number of bars
+    const width = Math.max(baseWidth, dataEntries.length * 60);  // Ensure enough width for all bars
+    const height = baseHeight;
+
+    const svg = d3.select(container).append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleBand()
+        .domain(dataEntries.map(d => d.label))
+        .range([0, width])
+        .padding(0.1);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(dataEntries, d => d.value)]).nice()
+        .range([height, 0]);
+
+    // Create bars with interactive tooltips
+    svg.selectAll(".bar")
+        .data(dataEntries)
+        .enter().append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d.label))
+        .attr("y", d => y(d.value))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(d.value))
+        .attr("fill", "steelblue")
+        .on("mouseover", function(event, d) {
+            d3.select(this).attr("fill", "orange");
+            const tooltip = d3.select(container).append("div")
+                .attr("class", "tooltip")
+                .style("position", "absolute")
+                .style("background-color", "#fff")
+                .style("padding", "5px")
+                .style("border", "1px solid #ddd")
+                .style("border-radius", "5px")
+                .style("pointer-events", "none")
+                .style("left", `${event.pageX + 10}px`)
+                .style("top", `${event.pageY - 30}px`)
+                .text(`${d.label}: ${d.value}`);
+        })
+        .on("mousemove", function(event) {
+            d3.select(container).select(".tooltip")
+                .style("left", `${event.pageX + 10}px`)
+                .style("top", `${event.pageY - 30}px`);
+        })
+        .on("mouseout", function() {
+            d3.select(this).attr("fill", "steelblue");
+            d3.select(container).select(".tooltip").remove();
+        });
+
+    // Add axes with transitions
+    svg.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).tickSize(0))
+        .selectAll(".tick text")
+        .attr("transform", "rotate(-45)")
+        .attr("text-anchor", "end");
+
+    svg.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(y).ticks(10));
+
+    // Add chart title
+    svg.append("text")
+        .attr("x", (width / 2))
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("text-decoration", "underline")
+        .text(title);
+}
+
+
+function createGraph(langData, langName) {
+    const container = document.createElement("div");
+    container.className = "graph-container";
+    container.innerHTML = `<h2>Interactive Graph for ${langName}</h2>`;
+
+    const svg = d3.select(container).append("svg")
+        .attr("width", 1100)
+        .attr("height", 700);
+
+    const graphData = {
+        nodes: [],
+        links: []
+    };
+
+    graphData.nodes.push({ id: langName, x: 150, y: 300 });
+
+    let i = 0;
+    for (const [targetLang, count] of Object.entries(langData.connected_languages)) {
+        if (!graphData.nodes.some(node => node.id === targetLang)) {
+            graphData.nodes.push({ id: targetLang, x: 600, y: 300 + (i * 60) });
+            i++;
+        }
+
+        graphData.links.push({ source: langName, target: targetLang, value: count });
+    }
+
+    if (langData.connected_languages[langName]) {
+        graphData.nodes.push({ id: `${langName}*`, x: 150, y: 370 });
+        graphData.links.push({ source: langName, target: `${langName}*`, value: langData.connected_languages[langName] });
+    }
+
+    const simulation = d3.forceSimulation(graphData.nodes)
+        .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(d => 320 + Math.log(d.value + 1) * 20))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("x", d3.forceX().x(d => d.id === langName ? 150 : 600))
+        .force("y", d3.forceY().y(300))
+        .force("collide", d3.forceCollide().radius(60));
+
+    const zoom = d3.zoom()
+        .scaleExtent([0.5, 5]) // Set zoom scale range
+        .on("zoom", (event) => {
+            svg.selectAll("g").attr("transform", event.transform);
+        });
+
+    svg.call(zoom);
+
+    const link = svg.append("g")
+        .attr("class", "links")
+        .selectAll("path")
+        .data(graphData.links)
+        .enter().append("path")
+        .attr("stroke", "#666")
+        .attr("stroke-width", d => Math.sqrt(d.value) * 1)
+        .attr("fill", "none")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round");
+
+    const node = svg.append("g")
+        .attr("class", "nodes")
+        .selectAll("circle")
+        .data(graphData.nodes)
+        .enter().append("circle")
+        .attr("r", 10)
+        .attr("fill", "#1f77b4")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 2)
+        .call(drag(simulation));
+
+    const label = svg.append("g")
+        .attr("class", "labels")
+        .selectAll("text")
+        .data(graphData.nodes)
+        .enter().append("text")
+        .attr("dx", 15)
+        .attr("dy", ".35em")
+        .text(d => d.id);
+
+    simulation.on("tick", () => {
+        link
+            .attr("d", d => {
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const dr = Math.sqrt(dx * dx + dy * dy);
+                const drAdjusted = dr + 20;
+                return `M${d.source.x},${d.source.y}A${drAdjusted},${drAdjusted} 0 0,1 ${d.target.x},${d.target.y}`;
+            });
+
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+        label
+            .attr("x", d => d.x)
+            .attr("y", d => d.y);
+    });
+
+    function drag(simulation) {
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        return d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+    }
+
+    node.on("mouseover", function(event, d) {
+        link.style("stroke-opacity", o => (o.source === d || o.target === d) ? 1 : 0.2);
+        node.style("fill-opacity", o => (o === d || o === o.source || o === o.target) ? 1 : 0.6);
+    });
+
+    node.on("mouseout", function() {
+        link.style("stroke-opacity", 0.6);
+        node.style("fill-opacity", 1);
+    });
+
+    // Calculate the bounding box of the nodes
+    const nodeBounds = graphData.nodes.reduce((acc, node) => {
+        const radius = 10; // Fixed radius since we use constant `r` for circles
+        return {
+            x1: Math.min(acc.x1, node.x - radius),
+            y1: Math.min(acc.y1, node.y - radius),
+            x2: Math.max(acc.x2, node.x + radius),
+            y2: Math.max(acc.y2, node.y + radius)
+        };
+    }, { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity });
+
+    const bboxWidth = nodeBounds.x2 - nodeBounds.x1;
+    const bboxHeight = nodeBounds.y2 - nodeBounds.y1;
+
+    // Compute the initial scale and translation
+    const scale = Math.min(1100 / bboxWidth, 700 / bboxHeight) * 0.5; // Adjust scale factor as needed
+    const translateX = (1100 - bboxWidth * scale) / 2 - nodeBounds.x1 * scale;
+    const translateY = (700 - bboxHeight * scale) / 2 - nodeBounds.y1 * scale;
+
+    // Apply the initial zoom transformation
+    svg.call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+
+    return container;
+}
+
+function showLanguageSpecificData(selectedLang) {
+    if (selectedLang) {
+        const langData = languageData[selectedLang];
+        createPlots(langData, selectedLang);
+        document.getElementById("graphs").innerHTML = "";
+        const graphContainer = createGraph(langData, selectedLang);
+        document.getElementById("graphs").appendChild(graphContainer);
+    } else {
+        document.getElementById("plots").innerHTML = "";
+        document.getElementById("graphs").innerHTML = "";
+    }
+}
+
+// Populate the language dropdown
+const languageSelect = document.getElementById("languageSelect");
+for (const lang in languageData) {
+    const option = document.createElement("option");
+    option.value = lang;
+    option.textContent = lang;
+    languageSelect.appendChild(option);
+}
+
+languageSelect.addEventListener("change", function() {
+    showLanguageSpecificData(this.value);
+});
+
+// Initialize the page
+createOverviewGraph();
+
+// Add event listener for the back button
+document.getElementById("backButton").addEventListener("click", () => {
+    d3.select("#overviewGraph").style("display", "block");
+    d3.select("#languageSpecificContent").style("display", "none");
+});
+
 </script>
 
 </body>
