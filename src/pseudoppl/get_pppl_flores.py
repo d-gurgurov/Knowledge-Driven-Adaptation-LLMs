@@ -97,24 +97,24 @@ def compute_pseudo_perplexity_from_flores(model_name: str, language_code: str, o
 
 
 if __name__ == "__main__":
-    language_codes_glot500 = ['tel_Telu', 'ben_Beng', 'lvs_Latn', 'mlt_Latn', 'amh_Ethi', 'uzb_Latn', 'sun_Latn', 'cym_Latn', 'mar_Deva', 
+    language_codes = ['tel_Telu', 'ben_Beng', 'lvs_Latn', 'mlt_Latn', 'amh_Ethi', 'uzn_Latn', 'sun_Latn', 'cym_Latn', 'mar_Deva', 
                             'ckb_Arab', 'mkd_Cyrl', 'kat_Geor', 'slk_Latn', 'ell_Grek', 
                             'tha_Thai', 'azj_Latn', 'slv_Latn', 'heb_Hebr', 
                             'ron_Latn', 'dan_Latn', 'urd_Arab', 'sin_Sinh', 'yor_Latn', 
                             'swh_Latn', 'uig_Arab', 'bod_Tibt', 'jav_Latn', 
                             'npi_Deva', 'zsm_Latn', 'bul_Cyrl']
 
-    model_name = "FacebookAI/xlm-roberta-base"  # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
+    model_name = "google-bert/bert-base-multilingual-cased"  # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
     results_summary = []
 
-    for language_code in language_codes_glot500:
-        output_file = f"/netscratch/dgurgurov/thesis/results/flores/xlm-r/{language_code}_pseudo_perplexity_results.csv" 
+    for language_code in language_codes:
+        output_file = f"/netscratch/dgurgurov/thesis/results/flores/mbert/{language_code}_pseudo_perplexity_results.csv" 
         average_pseudo_perplexity = compute_pseudo_perplexity_from_flores(model_name, language_code, output_file)
         results_summary.append({"language_code": language_code, "average_pseudo_perplexity": average_pseudo_perplexity})
 
     # Save the summary of average pseudo-perplexities for all languages
     results_df = pd.DataFrame(results_summary)
-    summary_output_file = "/netscratch/dgurgurov/thesis/results/flores/xlm-r/average_pseudo_perplexities_summary.csv"
+    summary_output_file = "/netscratch/dgurgurov/thesis/results/flores/mbert/average_pseudo_perplexities_summary.csv"
     results_df.to_csv(summary_output_file, index=False)
 
     print(f"Summary of average pseudo-perplexities saved to {summary_output_file}.")

@@ -19,9 +19,9 @@ language_codes_glotcc = ['amh-Ethi', 'uzb-Latn', 'sun-Latn', 'cym-Latn', 'mar-De
                          'swh-Latn', 'uig-Arab', 'bod-Tibt', 'mlt-Latn', 'jav-Latn', 
                          'npi-Deva', 'zsm-Latn', 'bul_Cyrl', 'tel-Telu', 'ben-Beng']
 
-for lang_code in language_codes_glot500:
+for lang_code in language_codes_glotcc:
     # Load the dataset
-    ds = load_dataset("cis-lmu/Glot500", lang_code)
+    ds = load_dataset("cis-lmu/GlotCC-v1", lang_code)
     
     # Access the training data
     train_data = ds['train'] # type: ignore
