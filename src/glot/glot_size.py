@@ -1,5 +1,7 @@
 import pandas as pd
 import os
+import csv
+from tqdm import tqdm
 
 # Define language metadata (this is an example, adjust it according to your data)
 language_metadata = {
@@ -41,8 +43,8 @@ stats = []
 # Define the path to your data directory
 data_dir = "/netscratch/dgurgurov/thesis/data/glot"
 
-# Loop over each language in your metadata
-for lang_code, meta in language_metadata.items():
+# Use tqdm to create a progress bar
+for lang_code, meta in tqdm(language_metadata.items(), desc="Processing languages"):
     lang_stats = {
         "Language Code": lang_code,
         "Language Name": meta["full_name"],
