@@ -107,10 +107,10 @@ def compute_pseudo_perplexity_from_csv(model_name: str, csv_file: str, column_na
     return results['average']
 
 if __name__ == "__main__":
-    model_name = "FacebookAI/xlm-roberta-base"  # Example model: google-bert/bert-base-multilingual-cased
+    model_name = "google-bert/bert-base-multilingual-cased"  # Example model: google-bert/bert-base-multilingual-cased FacebookAI/xlm-roberta-base
     base_data_path = "/netscratch/dgurgurov/thesis/data/conceptnet/test_cn_"  # Base path for input files
-    base_results_path = "/netscratch/dgurgurov/thesis/results/conceptnet/xlm-r/pseudo_perplexity_"  # Base path for result files
-    summary_output_file = "/netscratch/dgurgurov/thesis/results/conceptnet/xlm-r/average_pseudo_perplexities_summary.csv"
+    base_results_path = "/netscratch/dgurgurov/thesis/results/conceptnet/mbert/baseline/pseudo_perplexity_"  # Base path for result files
+    summary_output_file = "/netscratch/dgurgurov/thesis/results/conceptnet/mbert/baseline/average_pseudo_perplexities_summary.csv"
 
     languages_to_process = ['am', 'uz', 'su', 'cy', 'mr', 'te', 'ku', 'mk', 'bn', 'ka', 'sk', 'el', 'th', 'az', 'lv', 'sl', 
                             'he', 'ro', 'da', 'ur', 'si', 'yo', 'sw', 'ug', 'bo', 'mt', 'jv', 'ne', 'ms', 'bg']
