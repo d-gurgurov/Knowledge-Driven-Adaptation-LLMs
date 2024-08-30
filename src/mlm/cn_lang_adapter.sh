@@ -6,6 +6,10 @@ pip install accelerate -U
 languages=('am' 'uz' 'su' 'cy' 'mr' 'te' 'ku' 'mk' 'bn' 'ka' 'sk' 'el' 'th' 'az' 'lv' 'sl' 'he' 'ro' 'da' 'ur' 'si' 'yo' 'sw' 'ug' 'bo' 'mt' 'jv' 'ne' 'ms' 'bg')
 adapter_sources=("conceptnet")
 
+export NCCL_DEBUG=WARN
+
+# model choices: FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
+
 for source in "${adapter_sources[@]}"; do
     echo "Using adapter source: $source"
     

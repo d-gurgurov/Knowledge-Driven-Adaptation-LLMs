@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# pip install adapters evaluate
-# pip install accelerate -U
+pip install adapters evaluate
+pip install accelerate -U
 
 languages=('amh-Ethi' 'uzn-Latn' 'sun-Latn' 'cym-Latn' 'mar-Deva' 
                           'ckb-Arab' 'mkd-Cyrl' 'kat-Geor' 'slk-Latn' 'ell-Grek' 
@@ -12,6 +12,8 @@ languages=('amh-Ethi' 'uzn-Latn' 'sun-Latn' 'cym-Latn' 'mar-Deva'
 adapter_sources=("glot")
 
 export NCCL_DEBUG=WARN
+
+# model choices: FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
 
 for source in "${adapter_sources[@]}"; do
     echo "Using adapter source: $source"
