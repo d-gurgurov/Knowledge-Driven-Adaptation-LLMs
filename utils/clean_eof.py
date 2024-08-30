@@ -20,7 +20,7 @@ def clean_and_save_datasets(language):
     
     # Clean and save the train dataset
     try:
-        train_data = pd.read_csv(train_file, on_bad_lines='skip')  # Skip bad lines
+        train_data = pd.read_csv(train_file, on_bad_lines="skip", engine="python")  # Skip bad lines
         train_data.to_csv(train_file, index=False)  # Save cleaned data
         print(f"Cleaned and saved train dataset for {language}.")
     except Exception as e:
@@ -28,7 +28,7 @@ def clean_and_save_datasets(language):
 
     # Clean and save the validation dataset
     try:
-        val_data = pd.read_csv(val_file, on_bad_lines='skip')  # Skip bad lines
+        val_data = pd.read_csv(val_file, on_bad_lines="skip", engine="python")  # Skip bad lines
         val_data.to_csv(val_file, index=False)  # Save cleaned data
         print(f"Cleaned and saved validation dataset for {language}.")
     except Exception as e:
