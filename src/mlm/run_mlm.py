@@ -298,6 +298,8 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
+    
+
     if data_args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
         raw_datasets = load_dataset(
@@ -305,6 +307,7 @@ def main():
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
+            on_bad_lines='skip'  # This will skip problematic lines
         )
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset(
@@ -313,12 +316,14 @@ def main():
                 split=f"train[:{data_args.validation_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
+                on_bad_lines='skip'  # This will skip problematic lines
             )
             raw_datasets["train"] = load_dataset(
                 data_args.dataset_name,
                 data_args.dataset_config_name,
                 split=f"train[{data_args.validation_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
+                on_bad_lines='skip',  # This will skip problematic lines
                 use_auth_token=True if model_args.use_auth_token else None,
             )
     else:
@@ -336,7 +341,20 @@ def main():
             data_files=data_files,
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
+            on_bad_lines='skip'  # This will skip problematic lines
         )
+
+        # Function to filter out empty strings and None values
+        def filter_empty_strings(dataset, text_column_name):
+            return dataset.filter(lambda example: example[text_column_name] is not None and len(example[text_column_name]) > 0)
+        
+        # Filter train and validation datasets
+        if "train" in raw_datasets:
+            raw_datasets["train"] = filter_empty_strings(raw_datasets["train"], "content")
+
+        if "validation" in raw_datasets:
+            raw_datasets["validation"] = filter_empty_strings(raw_datasets["validation"], "content")
+
 
         # If no validation data is there, validation_split_percentage will be used to divide the dataset.
         if "validation" not in raw_datasets.keys():
@@ -346,6 +364,7 @@ def main():
                 split=f"train[:{data_args.validation_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
+                on_bad_lines='skip'  # This will skip problematic lines
             )
             raw_datasets["train"] = load_dataset(
                 extension,
@@ -353,6 +372,7 @@ def main():
                 split=f"train[{data_args.validation_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
+                on_bad_lines='skip'  # This will skip problematic lines
             )
 
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
