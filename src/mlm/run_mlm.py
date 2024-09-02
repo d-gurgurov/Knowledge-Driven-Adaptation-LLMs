@@ -345,15 +345,24 @@ def main():
         )
 
         # Function to filter out empty strings and None values
-        def filter_empty_strings(dataset, text_column_name):
-            return dataset.filter(lambda example: example[text_column_name] is not None and len(example[text_column_name]) > 0)
+        def filter_empty_strings(dataset, column_name1, column_name2):
+            # Check if the first column exists
+            if column_name1 in dataset.column_names:
+                column_name = column_name1
+            # If not, check for the second column
+            elif column_name2 in dataset.column_names:
+                column_name = column_name2
+            else:
+                raise ValueError(f"Neither '{column_name1}' nor '{column_name2}' found in the dataset columns: {dataset.column_names}")
+
+            return dataset.filter(lambda example: example[column_name] is not None and len(example[column_name]) > 0)
         
         # Filter train and validation datasets
         if "train" in raw_datasets:
-            raw_datasets["train"] = filter_empty_strings(raw_datasets["train"], "content")
+            raw_datasets["train"] = filter_empty_strings(raw_datasets["train"], "content", "text")
 
         if "validation" in raw_datasets:
-            raw_datasets["validation"] = filter_empty_strings(raw_datasets["validation"], "content")
+            raw_datasets["validation"] = filter_empty_strings(raw_datasets["validation"], "content", "text")
 
 
         # If no validation data is there, validation_split_percentage will be used to divide the dataset.
@@ -444,7 +453,7 @@ def main():
         column_names = raw_datasets["train"].column_names
     else:
         column_names = raw_datasets["validation"].column_names
-    text_column_name = "text" if "text" in column_names else column_names[0]
+    text_column_name = "text" if "text" in column_names else "content"
 
     if data_args.max_seq_length is None:
         max_seq_length = tokenizer.model_max_length
