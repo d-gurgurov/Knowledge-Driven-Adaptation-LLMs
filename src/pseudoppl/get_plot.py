@@ -6,19 +6,35 @@ def read_data(file_path):
     # Read the CSV file into a pandas DataFrame
     return pd.read_csv(file_path)
 
-def plot_comparison(data1, data2, output_file='flores_pppl_1.png', title="Model Comparison on FLORES Dataset"):
-    # Merge the two dataframes on the language code
-    merged_data = pd.merge(data1, data2, on='language_code', suffixes=('_model1', '_model2'))
-
-    # Sort the merged data by the first model's average pseudo-perplexity in descending order
-    merged_data = merged_data.sort_values(by='average_pseudo_perplexity_model1', ascending=False)
+def plot_comparison(extra_model=None, output_file='conceptnet_pppl_comparison.png', title="Model Comparison on CN Dataset", **data_files):
+    # Read and merge all the data files provided as arguments
+    merged_data = None
+    for model_name, file_path in data_files.items():
+        data = read_data(file_path)
+        data = data.rename(columns={"average_pseudo_perplexity": f"average_pseudo_perplexity_{model_name}"})
+        
+        if merged_data is None:
+            merged_data = data
+        else:
+            merged_data = pd.merge(merged_data, data, on='language')
     
+    # Sort the merged data by the first model's average pseudo-perplexity in descending order
+    first_model = list(data_files.keys())[0]
+    merged_data = merged_data.sort_values(by=f'average_pseudo_perplexity_{first_model}', ascending=False)  # type: ignore
     
     # Plotting the results
     plt.figure(figsize=(10, 6))
     
-    plt.plot(merged_data['language_code'], merged_data['average_pseudo_perplexity_model1'], label='mBERT', marker='o')
-    plt.plot(merged_data['language_code'], merged_data['average_pseudo_perplexity_model2'], label='XLM-R', marker='o')
+    for model_name in data_files.keys():
+        line_style = '--' if model_name == extra_model else '-'  # Dashed line for base model
+        color = 'lightgray' if model_name == extra_model else None  # Light gray color for base model
+        
+        plt.plot(merged_data['language'], 
+                 merged_data[f'average_pseudo_perplexity_{model_name}'], 
+                 label=model_name, 
+                 marker='o', 
+                 linestyle=line_style, 
+                 color=color)
     
     plt.xlabel('Language Code')
     plt.ylabel('Average Pseudo-Perplexity')
@@ -28,9 +44,9 @@ def plot_comparison(data1, data2, output_file='flores_pppl_1.png', title="Model 
     plt.grid(True)
     
     # Adjust y-axis limits for better visibility
-    min_value = min(merged_data['average_pseudo_perplexity_model1'].min(), merged_data['average_pseudo_perplexity_model2'].min())
-    max_value = max(merged_data['average_pseudo_perplexity_model1'].max(), merged_data['average_pseudo_perplexity_model2'].max())
-    max_value = 200
+    min_value = merged_data[[f'average_pseudo_perplexity_{model_name}' for model_name in data_files.keys()]].min().min()
+    max_value = merged_data[[f'average_pseudo_perplexity_{model_name}' for model_name in data_files.keys()]].max().max()
+    max_value = 500
 
     # Add some padding to the y-axis
     padding = (max_value - min_value) * 0.1
@@ -46,13 +62,18 @@ def plot_comparison(data1, data2, output_file='flores_pppl_1.png', title="Model 
     plt.show()
 
 if __name__ == "__main__":
-    # Define the paths to the two files
-    file1 = '/netscratch/dgurgurov/thesis/results/flores/mbert/average_pseudo_perplexities_summary.csv'
-    file2 = '/netscratch/dgurgurov/thesis/results/flores/xlm-r/average_pseudo_perplexities_summary.csv'
-    
-    # Read the data
-    data1 = read_data(file1)
-    data2 = read_data(file2)
+
+    # Define the paths to the files for each model
+    model_files = {
+        "mBERT": '/netscratch/dgurgurov/thesis/results/conceptnet/mbert/baseline/average_pseudo_perplexities_summary.csv',
+        "mBERT_LoRA": '/netscratch/dgurgurov/thesis/results/conceptnet/mbert/lora/average_pseudo_perplexities_summary.csv',
+        "mBERT_Seq_bn": '/netscratch/dgurgurov/thesis/results/conceptnet/mbert/seq_bn/average_pseudo_perplexities_summary.csv',
+        "mBERT_Seq_bn_inv": '/netscratch/dgurgurov/thesis/results/conceptnet/mbert/seq_bn_inv/average_pseudo_perplexities_summary.csv',
+        "XLM-R": '/netscratch/dgurgurov/thesis/results/conceptnet/xlm-r/baseline/average_pseudo_perplexities_summary.csv',
+        "XLM-R_LoRA": '/netscratch/dgurgurov/thesis/results/conceptnet/xlm-r/lora/average_pseudo_perplexities_summary.csv',
+        "XLM-R_Seq_bn": '/netscratch/dgurgurov/thesis/results/conceptnet/xlm-r/seq_bn/average_pseudo_perplexities_summary.csv',
+        "XLM-R_Seq_bn_inv": '/netscratch/dgurgurov/thesis/results/conceptnet/xlm-r/seq_bn_inv/average_pseudo_perplexities_summary.csv'
+    }
     
     # Plot the comparison
-    plot_comparison(data1, data2)
+    plot_comparison(extra_model="mBERT", **model_files)
