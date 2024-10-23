@@ -56,6 +56,7 @@ from transformers.utils.versions import require_version
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:512'
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.26.0")
