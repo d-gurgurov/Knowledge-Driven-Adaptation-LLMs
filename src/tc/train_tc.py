@@ -141,7 +141,6 @@ def main():
     # prepare model
     config = AutoConfig.from_pretrained(args.model_name)
     model = AutoAdapterModel.from_pretrained(args.model_name, config=config)
-    model = AutoModel.from_pretrained(args.model_name)
 
     def find_latest_checkpoint(adapter_base_path: str, language_code: str) -> str:
         """

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pip install evaluate adapters scikit-learn
+
 # Define variables
 languages=('amh_Ethi' 'uzn_Latn' 'sun_Latn' 'cym_Latn' 'mar_Deva' 
            'ckb_Arab' 'mkd_Cyrl' 'kat_Geor' 'slk_Latn' 'ell_Grek' 
@@ -14,7 +16,7 @@ model="mbert"         # FacebookAI/xlm-roberta-base google-bert/bert-base-multil
 configuration="baseline"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
 
 # Directory base path
-base_dir="/ds/text/LangAdapters/downstream_tasks/tc"
+base_dir="/netscratch/dgurgurov/thesis/downstream_tasks/tc"
 
 # Loop over each language and seed
 for lang in "${languages[@]}"; do
@@ -29,17 +31,17 @@ for lang in "${languages[@]}"; do
     python train_tc.py \
       --language "$lang" \
       --output_dir "$output_dir" \
-      --adapter_dir "/ds/text/LangAdapters/lang_adapters/$source/$model/$configuration/${lang}" \
+      --adapter_dir "/netscratch/dgurgurov/thesis/lang_adapters/$source/$model/$configuration" \
       --model_name "google-bert/bert-base-multilingual-cased" \
       --learning_rate 1e-4 \
-      --num_train_epochs 100 \
+      --num_train_epochs 20 \
       --per_device_train_batch_size 32 \
       --per_device_eval_batch_size 32 \
       --evaluation_strategy "epoch" \
-      --save_strategy "no" \
+      --save_strategy "epoch" \
       --weight_decay 0.01 \
       --seed "$seed" \
-      --language_adapter "yes" \
+      --language_adapter "no" \
       --adapter_source "$source"
   done
 done
