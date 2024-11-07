@@ -3,7 +3,7 @@ import json
 import pandas as pd
 
 # Define base directory path and other configurations
-base_dir = "/netscratch/dgurgurov/thesis/donwstream_tasks/tc"
+base_dir = "/netscratch/dgurgurov/thesis/donwstream_tasks/ner"
 sources = ["conceptnet", "glot"]
 models = ["mbert", "xlm-r"]
 configurations = ["baseline", "seq_bn", "seq_bn_inv", "lora"]
@@ -30,7 +30,7 @@ for source in sources:
                     if os.path.isfile(result_file):
                         with open(result_file, "r") as f:
                             scores = json.load(f)
-                            seed_scores_f1.append(scores["f1"])  # Collect F1 score for each seed
+                            seed_scores_f1.append(scores["eval_overall_f1"])  # Collect F1 score for each seed
 
                 # Calculate average F1 across seeds and format row
                 if seed_scores_f1:

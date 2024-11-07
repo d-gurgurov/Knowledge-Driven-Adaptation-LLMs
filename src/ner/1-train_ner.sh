@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pip install evaluate adapters scikit-learn
+
 # Define variables
 all_languages=(
     'amh_Ethi' 'azj_Latn' 'ben_Beng' 'bod_Tibt' 'bul_Cyrl' 
@@ -10,17 +12,16 @@ all_languages=(
     'uig_Arab' 'urd_Arab' 'uzn_Latn' 'yor_Latn' 'zsm_Latn'
 )
 
-languages=('slk_Latn' 'ell_Grek' 'slv_Latn' 'yor_Latn' 'zsm_Latn')
+
+languages=('yor_Latn' 'zsm_Latn')
 
 # Configurable parameters
 source="glot"   # Can be set to "glot"
 model="xlm-r"         # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
-configuration="seq_bn_inv"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
+configuration="baseline"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
 
-# xlm-r cn seq_bn_inv --> 'slk_Latn' (1 is done) 'ell_Grek' 'slv_Latn' 'yor_Latn' 'zsm_Latn'
-# xlm-r glot lora --> 'slv_Latn' (almost done) 'yor_Latn' 'zsm_Latn'
-# xlm-r glot seq_bn --> 'slv_Latn' (almost done) 'yor_Latn' 'zsm_Latn'
-# xlm-r glot seq_bn_inv --> 'slk_Latn' (1 is done) 'ell_Grek' 'slv_Latn' 'yor_Latn' 'zsm_Latn'
+# xlm-r cn seq_bn_inv --> 'ell_Grek' 'slv_Latn' 'yor_Latn' 'zsm_Latn'
+# xlm-r glot seq_bn_inv --> 'ell_Grek' 'slv_Latn' 'yor_Latn' 'zsm_Latn'
 
 # Directory base path
 base_dir="/netscratch/dgurgurov/thesis/donwstream_tasks/ner"
@@ -48,7 +49,7 @@ for lang in "${languages[@]}"; do
       --save_strategy "epoch" \
       --weight_decay 0.01 \
       --seed "$seed" \
-      --language_adapter "yes" \
+      --language_adapter "no" \
       --adapter_source "$source"
   done
 done
