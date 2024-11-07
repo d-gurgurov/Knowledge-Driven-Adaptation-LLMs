@@ -13,6 +13,7 @@ from transformers import (
     AutoConfig,
     TrainingArguments,
     DataCollatorForTokenClassification,
+    AutoModel,
 )
 from adapters import AutoAdapterModel, AdapterConfig, AdapterTrainer
 from adapters.composition import Stack
@@ -77,11 +78,12 @@ def main():
     set_seed(seed)
 
     def tokenize_adjust_labels(all_samples_per_split):
-        tokenized_samples = tokenizer.batch_encode_plus(all_samples_per_split["tokens"], padding=True, truncation=True, is_split_into_words=True)
-        # tokenized_samples is not a datasets object so this alone won't work with Trainer API, hence map is used 
-        # so the new keys [input_ids, labels (after adjustment)]
-        # can be added to the datasets dict for each train test validation split
+        tokenized_samples = tokenizer.batch_encode_plus(all_samples_per_split["tokens"], is_split_into_words=True)
+        #tokenized_samples is not a datasets object so this alone won't work with Trainer API, hence map is used 
+        #so the new keys [input_ids, labels (after adjustment)]
+        #can be added to the datasets dict for each train test validation split
         total_adjusted_labels = []
+        print(len(tokenized_samples["input_ids"]))
         for k in range(0, len(tokenized_samples["input_ids"])):
             prev_wid = -1
             word_ids_list = tokenized_samples.word_ids(batch_index=k)
@@ -157,7 +159,7 @@ def main():
         model.load_adapter(adapter_dir + "/mlm", config=lang_adapter_config, load_as="lang_adapter", with_head=False)
 
         model.add_adapter("ner")
-        model.add_classification_head("ner", num_labels=len(label_names), id2label=id2label)
+        model.add_tagging_head("ner", num_labels=len(label_names), id2label=id2label)
         model.train_adapter(["ner"])
         
         # set the active adapter and enable training only for the classification head
@@ -165,7 +167,7 @@ def main():
     else:
         # no language adapter used
         model.add_adapter("ner")
-        model.add_classification_head("ner", num_labels=len(label_names), id2label=id2label)
+        model.add_tagging_head("ner", num_labels=len(label_names), id2label=id2label)
         model.train_adapter(["ner"])
     
     print(model.adapter_summary())
