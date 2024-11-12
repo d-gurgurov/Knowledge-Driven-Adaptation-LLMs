@@ -4,6 +4,19 @@ def read_data(file_path):
     # Read the CSV file into a pandas DataFrame
     return pd.read_csv(file_path)
 
+def calculate_group_averages(df, target_languages):
+    """
+    Calculate averages for languages in target_languages and those not in it
+    """
+    # Create masks for the two groups
+    in_group = df['language'].isin(target_languages)
+    
+    # Calculate averages for both groups
+    target_avg = df[in_group].iloc[:, 1:].mean(numeric_only=True).round(2)
+    other_avg = df[~in_group].iloc[:, 1:].mean(numeric_only=True).round(2)
+    
+    return target_avg, other_avg
+
 def generate_latex_table(output_file='model_comparison_pppl.tex', **data_files):
     # Read and merge all the data files provided as arguments
     merged_data = None
@@ -14,7 +27,7 @@ def generate_latex_table(output_file='model_comparison_pppl.tex', **data_files):
         data = data.rename(columns={"average_pseudo_perplexity": f"{model_name}"})
         
         # Round values to two decimal places
-        data[f'{model_name}'] = data[f'{model_name}'].round(2)
+        data[f'{model_name}'] = data[f'{model_name}']
         
         if merged_data is None:
             merged_data = data
@@ -26,6 +39,17 @@ def generate_latex_table(output_file='model_comparison_pppl.tex', **data_files):
     # Calculate averages for each model's column (excluding the 'Language' column)
     averages = merged_data.iloc[:, 1:].mean(numeric_only=True).round(2) 
     print(averages)
+
+    # Define target languages
+    target_languages = ["si", "mt", "ug", "am", "bo", "ku", "yo"]
+
+    # Calculate group averages
+    target_avg, other_avg = calculate_group_averages(merged_data, target_languages)
+    
+    print(f"\nAverages for target languages {target_languages}:")
+    print(target_avg)
+    print("\nAverages for other languages:")
+    print(other_avg)
 
     # Start building the LaTeX table
     latex = r"""\begin{table}[h!]
@@ -86,25 +110,25 @@ def generate_latex_table(output_file='model_comparison_pppl.tex', **data_files):
 if __name__ == "__main__":
     # Define the paths to the files for each model, data source, and adapters
     conceptnet_files = {
-        "mBERT_ConceptNet_Baseline": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/mbert/baseline/average_pseudo_perplexities_summary.csv',
-        "mBERT_ConceptNet_Seq_bn": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/mbert/seq_bn/average_pseudo_perplexities_summary.csv',
-        "mBERT_ConceptNet_LoRA": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/mbert/lora/average_pseudo_perplexities_summary.csv',
-        "mBERT_ConceptNet_Seq_bn_inv": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/mbert/seq_bn_inv/average_pseudo_perplexities_summary.csv',
+        "mBERT_ConceptNet_Baseline": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/baseline/average_pseudo_perplexities_summary.csv',
+        "mBERT_ConceptNet_Seq_bn": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/conceptnet/mbert/seq_bn/average_pseudo_perplexities_summary.csv',
+        "mBERT_ConceptNet_LoRA": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/conceptnet/mbert/lora/average_pseudo_perplexities_summary.csv',
+        "mBERT_ConceptNet_Seq_bn_inv": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/conceptnet/mbert/seq_bn_inv/average_pseudo_perplexities_summary.csv',
         
-        "XLM-R_ConceptNet_Baseline": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/xlm-r/baseline/average_pseudo_perplexities_summary.csv',
-        "XLM-R_ConceptNet_Seq_bn": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/xlm-r/seq_bn/average_pseudo_perplexities_summary.csv',
-        "XLM-R_ConceptNet_LoRA": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/xlm-r/lora/average_pseudo_perplexities_summary.csv',
-        "XLM-R_ConceptNet_Seq_bn_inv": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/conceptnet/xlm-r/seq_bn_inv/average_pseudo_perplexities_summary.csv'
+        "XLM-R_ConceptNet_Baseline": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/xlm-r/baseline/average_pseudo_perplexities_summary.csv',
+        "XLM-R_ConceptNet_Seq_bn": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/conceptnet/xlm-r/seq_bn/average_pseudo_perplexities_summary.csv',
+        "XLM-R_ConceptNet_LoRA": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/conceptnet/xlm-r/lora/average_pseudo_perplexities_summary.csv',
+        "XLM-R_ConceptNet_Seq_bn_inv": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/conceptnet/xlm-r/seq_bn_inv/average_pseudo_perplexities_summary.csv'
     }
     
     glot_files = {
-        "mBERT_Glot_Seq_bn": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/flores/mbert/seq_bn/average_pseudo_perplexities_summary.csv',
-        "mBERT_Glot_LoRA": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/flores/mbert/lora/average_pseudo_perplexities_summary.csv',
-        "mBERT_Glot_Seq_bn_inv": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/flores/mbert/seq_bn_inv/average_pseudo_perplexities_summary.csv',
+        "mBERT_Glot_Seq_bn": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/seq_bn/average_pseudo_perplexities_summary.csv',
+        "mBERT_Glot_LoRA": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/lora/average_pseudo_perplexities_summary.csv',
+        "mBERT_Glot_Seq_bn_inv": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/seq_bn_inv/average_pseudo_perplexities_summary.csv',
         
-        "XLM-R_Glot_Seq_bn": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/flores/xlm-r/seq_bn/average_pseudo_perplexities_summary.csv',
-        "XLM-R_Glot_LoRA": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/flores/xlm-r/lora/average_pseudo_perplexities_summary.csv',
-        "XLM-R_Glot_Seq_bn_inv": '/netscratch/dgurgurov/thesis/donwstream_tasks/pppl/flores/xlm-r/seq_bn_inv/average_pseudo_perplexities_summary.csv'
+        "XLM-R_Glot_Seq_bn": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/xlm-r/seq_bn/average_pseudo_perplexities_summary.csv',
+        "XLM-R_Glot_LoRA": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/xlm-r/lora/average_pseudo_perplexities_summary.csv',
+        "XLM-R_Glot_Seq_bn_inv": '/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/xlm-r/seq_bn_inv/average_pseudo_perplexities_summary.csv'
     }
     
     # Combine ConceptNet and Glot files for table generation
