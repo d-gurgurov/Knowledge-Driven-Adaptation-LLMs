@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pip install evaluate adapters scikit-learn
+pip install evaluate adapters scikit-learn seqeval
 
 # Define variables
 all_languages=(
@@ -13,7 +13,7 @@ all_languages=(
 )
 
 
-languages=('yor_Latn' 'zsm_Latn')
+languages=('mlt_Latn')
 
 # Configurable parameters
 source="glot"   # Can be set to "glot"

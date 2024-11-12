@@ -78,7 +78,7 @@ def main():
     set_seed(seed)
 
     def tokenize_adjust_labels(all_samples_per_split):
-        tokenized_samples = tokenizer.batch_encode_plus(all_samples_per_split["tokens"], is_split_into_words=True)
+        tokenized_samples = tokenizer.batch_encode_plus(all_samples_per_split["tokens"], max_length=512, is_split_into_words=True)
         #tokenized_samples is not a datasets object so this alone won't work with Trainer API, hence map is used 
         #so the new keys [input_ids, labels (after adjustment)]
         #can be added to the datasets dict for each train test validation split
