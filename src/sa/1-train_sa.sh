@@ -11,9 +11,9 @@ languages=('amh_Ethi' 'uzn_Latn' 'sun_Latn' 'cym_Latn' 'mar_Deva'
            'npi_Deva' 'zsm_Latn' 'bul_Cyrl' 'tel_Telu' 'ben_Beng')
 
 # Configurable parameters
-source="conceptnet"   # Can be set to "glot"
+source="glot"   # Can be set to "glot"
 model="xlm-r"         # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
-configuration="baseline"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
+configuration="lora"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
 
 # Directory base path
 base_dir="/netscratch/dgurgurov/thesis/downstream_tasks/sa"
@@ -41,7 +41,7 @@ for lang in "${languages[@]}"; do
       --save_strategy "epoch" \
       --weight_decay 0.01 \
       --seed "$seed" \
-      --language_adapter "no" \
+      --language_adapter "yes" \
       --adapter_source "$source"
   done
 done
