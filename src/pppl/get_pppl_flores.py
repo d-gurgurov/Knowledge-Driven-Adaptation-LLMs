@@ -53,6 +53,14 @@ class PseudoPerplexity(Metric):
 
         return pseudo_log_likelihood
 
+def split_long_words(sentence: str, max_length: int = 99) -> str:
+    words = sentence.split()
+    for i, word in enumerate(words):
+        if len(word) > max_length:
+            # Split the word at the max_length character
+            words[i] = ' '.join([word[j:j+max_length] for j in range(0, len(word), max_length)])
+    return ' '.join(words)
+
 def compute_pseudo_perplexity_from_flores(model_name: str, language_code: str, output_file: str, seed: int = 42) -> float:
     """
     Computes the pseudo-perplexity for a subset of sentences from the FLORES-200 dataset and saves the results.
@@ -70,8 +78,11 @@ def compute_pseudo_perplexity_from_flores(model_name: str, language_code: str, o
 
     # Load the FLORES-200 dataset
     dataset = load_dataset("facebook/flores", name=language_code)
-    print(dataset)
     sentences = dataset['devtest']['sentence']  # type: ignore
+
+    # If the language is 'tha_Thai', split long words in each sentence
+    if language_code == "tha_Thai":
+        sentences = [split_long_words(sentence) for sentence in sentences]
 
     # Check if GPU is available and set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -103,18 +114,20 @@ if __name__ == "__main__":
                             'ron_Latn', 'dan_Latn', 'urd_Arab', 'sin_Sinh', 'yor_Latn', 
                             'swh_Latn', 'uig_Arab', 'bod_Tibt', 'jav_Latn', 
                             'npi_Deva', 'zsm_Latn', 'bul_Cyrl']
+    
+    language_codes = ['tha_Thai']
 
     model_name = "google-bert/bert-base-multilingual-cased"  # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
     results_summary = []
 
     for language_code in language_codes:
-        output_file = f"/netscratch/dgurgurov/thesis/results/flores/mbert/{language_code}_pseudo_perplexity_results.csv" 
+        output_file = f"/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/baseline/{language_code}_pseudo_perplexity_results.csv" 
         average_pseudo_perplexity = compute_pseudo_perplexity_from_flores(model_name, language_code, output_file)
         results_summary.append({"language_code": language_code, "average_pseudo_perplexity": average_pseudo_perplexity})
 
     # Save the summary of average pseudo-perplexities for all languages
     results_df = pd.DataFrame(results_summary)
-    summary_output_file = "/netscratch/dgurgurov/thesis/results/flores/mbert/average_pseudo_perplexities_summary.csv"
+    summary_output_file = "/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/baseline/average_pseudo_perplexities_summary.csv"
     results_df.to_csv(summary_output_file, index=False)
 
     print(f"Summary of average pseudo-perplexities saved to {summary_output_file}.")

@@ -65,6 +65,14 @@ def find_latest_checkpoint(adapter_base_path: str, language_code: str) -> str:
     latest_checkpoint = checkpoints[-1]  # Get the latest checkpoint
     return os.path.join(lang_adapter_path, latest_checkpoint)
 
+def split_long_words(sentence: str, max_length: int = 99) -> str:
+    words = sentence.split()
+    for i, word in enumerate(words):
+        if len(word) > max_length:
+            # Split the word at the max_length character
+            words[i] = ' '.join([word[j:j+max_length] for j in range(0, len(word), max_length)])
+    return ' '.join(words)
+
 def compute_pseudo_perplexity_with_adapter(model_name: str, adapter_dir: str, language_code: str, output_file: str, seed: int = 42) -> float:
     """
     Computes the pseudo-perplexity for a subset of sentences from the FLORES-200 dataset and saves the results, using a language adapter.
@@ -82,6 +90,10 @@ def compute_pseudo_perplexity_with_adapter(model_name: str, adapter_dir: str, la
     # Load the FLORES-200 dataset
     dataset = load_dataset("facebook/flores", name=language_code)
     sentences = dataset['devtest']['sentence']  # type: ignore
+
+    # If the language is 'tha_Thai', split long words in each sentence
+    if language_code == "tha_Thai":
+        sentences = [split_long_words(sentence) for sentence in sentences]
 
     # Check if GPU is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -120,7 +132,7 @@ def compute_pseudo_perplexity_with_adapter(model_name: str, adapter_dir: str, la
 
 if __name__ == "__main__":
     model_name = "google-bert/bert-base-multilingual-cased"
-    adapter_type = "seq_bn_inv"
+    adapter_type = "seq_bn"
 
     adapter_dir_base = f"/netscratch/dgurgurov/thesis/lang_adapters/glot/mbert/{adapter_type}"
     results_summary = []
@@ -132,7 +144,7 @@ if __name__ == "__main__":
                             'ron_Latn', 'dan_Latn', 'urd_Arab', 'sin_Sinh', 'yor_Latn', 
                             'swh_Latn', 'uig_Arab', 'bod_Tibt', 'jav_Latn', 
                             'npi_Deva', 'zsm_Latn', 'bul_Cyrl']
-
+    
     for language_code in language_codes_glotcc:
         output_file = f"/netscratch/dgurgurov/thesis/results/flores/mbert/{adapter_type}/{language_code}_pseudo_perplexity_results.csv"
         avg_pseudo_perplexity = compute_pseudo_perplexity_with_adapter(model_name, adapter_dir_base, language_code, output_file)
