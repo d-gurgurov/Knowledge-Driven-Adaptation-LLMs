@@ -21,7 +21,7 @@ for source in "${adapter_sources[@]}"; do
     for lang in "${languages[@]}"; do
         echo "Training for language: $lang"
         
-        torchrun --nproc_per_node=2 run_mlm.py \
+        torchrun --nproc_per_node=2  --master_port=25466 run_mlm.py \
             --model_name_or_path google-bert/bert-base-multilingual-cased \
             --train_file "/ds/text/LangAdapters/data/$source/train_glot_${lang}.csv" \
             --validation_file "/ds/text/LangAdapters/data/$source/val_glot_${lang}.csv" \
