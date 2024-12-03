@@ -66,9 +66,6 @@ print(f"F1 Before - Spearman Correlation: {spearman_corr_ppl:.2f}, p-value: {spe
 print(f"F1 After - Pearson Correlation: {pearson_corr_pppl:.2f}, p-value: {pearson_pval_pppl:.2e}")
 print(f"F1 After - Spearman Correlation: {spearman_corr_pppl:.2f}, p-value: {spearman_pval_pppl:.2e}")
 
-
-# De
-
 # Define languages to exclude
 excluded_languages = ["yo", "mt", "bo"]
 
