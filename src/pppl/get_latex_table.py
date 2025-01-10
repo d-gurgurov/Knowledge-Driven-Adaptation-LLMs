@@ -41,7 +41,7 @@ def generate_latex_table(output_file='model_comparison_pppl.tex', **data_files):
     print(averages)
 
     # Define target languages
-    target_languages = ["si", "mt", "ug", "am", "bo", "ku", "yo"]
+    target_languages = ["mt", "bo", "yo"]
 
     # Calculate group averages
     target_avg, other_avg = calculate_group_averages(merged_data, target_languages)

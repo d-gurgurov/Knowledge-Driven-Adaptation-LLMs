@@ -59,8 +59,8 @@ xlmr_results = combined_results[combined_results['Model Configuration'].str.cont
 
 # Excluded languages for mBERT and XLM-R models
 exclude_languages = {
-        "mBERT": ["sin_Sinh", "mlt_Latn", "uig_Arab", "amh_Ethi", "bod_Tibt"],
-        "XLM-R": ["ckb_Arab", "yor_Latn", "mlt_Latn", "bod_Tibt"]
+        "mBERT": ["sin_Sinh", "mlt_Latn", "uig_Arab", "amh_Ethi", "bod_Tibt", "ckb_Arab"],
+        "XLM-R": ["yor_Latn", "mlt_Latn", "bod_Tibt"]
     }
 
 # Function to plot the results for mBERT or XLM-R

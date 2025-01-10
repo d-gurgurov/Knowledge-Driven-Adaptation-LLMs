@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModelForMaskedLM, PreTrainedModel, M
 from tqdm import tqdm
 import random
 from datasets import load_dataset
+import os
 
 class Metric(ABC):
     def __init__(self, model: PreTrainedModel, device: torch.device) -> None:
@@ -61,6 +62,16 @@ def split_long_words(sentence: str, max_length: int = 99) -> str:
             words[i] = ' '.join([word[j:j+max_length] for j in range(0, len(word), max_length)])
     return ' '.join(words)
 
+def find_latest_checkpoint(base_path: str, language_code: str) -> str:
+    """
+    Finds the latest checkpoint directory for the given language.
+    """
+    lang_path = os.path.join(base_path, language_code)
+    checkpoints = [d for d in os.listdir(lang_path) if d.startswith("checkpoint")]
+    checkpoints.sort(key=lambda x: int(x.split('-')[-1]))  # Sort by checkpoint number
+    latest_checkpoint = checkpoints[-1]  # Get the latest checkpoint
+    return os.path.join(lang_path, latest_checkpoint)
+
 def compute_pseudo_perplexity_from_flores(model_name: str, language_code: str, output_file: str, seed: int = 42) -> float:
     """
     Computes the pseudo-perplexity for a subset of sentences from the FLORES-200 dataset and saves the results.
@@ -88,6 +99,8 @@ def compute_pseudo_perplexity_from_flores(model_name: str, language_code: str, o
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialize the pseudo-perplexity metric
+    model_name = find_latest_checkpoint(model_name, language_code.replace('_', '-'))
+    print(model_name, " being used")
     model = AutoModelForMaskedLM.from_pretrained(model_name)
     pseudo_perplexity_metric = PseudoPerplexity(model, device)
 
@@ -116,17 +129,17 @@ if __name__ == "__main__":
                             'npi_Deva', 'zsm_Latn', 'bul_Cyrl']
 
 
-    model_name = "/netscratch/dgurgurov/thesis/src/mlm/model_fine-tune/glot/mbert/uzn-Latn/checkpoint-98500"  # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
     results_summary = []
 
     for language_code in language_codes:
-        output_file = f"/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/fine-tune/{language_code}_pseudo_perplexity_results.csv" 
+        model_name = f"/netscratch/dgurgurov/thesis/src/mlm/model_fine-tune/glot/xlm-r" 
+        output_file = f"/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/xlm-r/fine-tune/{language_code}_pseudo_perplexity_results.csv" 
         average_pseudo_perplexity = compute_pseudo_perplexity_from_flores(model_name, language_code, output_file)
         results_summary.append({"language_code": language_code, "average_pseudo_perplexity": average_pseudo_perplexity})
 
     # Save the summary of average pseudo-perplexities for all languages
     results_df = pd.DataFrame(results_summary)
-    summary_output_file = "/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/mbert/fine-tune/average_pseudo_perplexities_summary.csv"
+    summary_output_file = "/netscratch/dgurgurov/thesis/downstream_tasks/pppl/flores/xlm-r/fine-tune/average_pseudo_perplexities_summary.csv"
     results_df.to_csv(summary_output_file, index=False)
 
     print(f"Summary of average pseudo-perplexities saved to {summary_output_file}.")
