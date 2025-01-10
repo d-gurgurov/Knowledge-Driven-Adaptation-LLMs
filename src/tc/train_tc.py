@@ -11,8 +11,8 @@ from transformers import set_seed
 from datasets import load_dataset
 from transformers import (
     AutoTokenizer,
-    AutoConfig, AutoModel,
-    TrainingArguments, Trainer,
+    AutoConfig,
+    TrainingArguments,
 )
 from adapters import AutoAdapterModel, AdapterConfig, AdapterTrainer
 from adapters.composition import Stack
@@ -42,8 +42,11 @@ args = parse_arguments()
 def encode_batch(examples):
     """Encodes a batch of input data using the model tokenizer."""
     all_encoded = {"input_ids": [], "attention_mask": [], "labels": []}
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
+    if "bert" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-multilingual-cased")
+    elif "xlm-r" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("FacebookAI/xlm-roberta-base")
     if "category" in examples:
         examples["label"] = examples.pop("category")
 
@@ -111,6 +114,17 @@ def main():
         "tha_Thai": "th"
     }
 
+    def find_latest_checkpoint(adapter_base_path: str, language_code: str) -> str:
+        """
+        Finds the latest checkpoint directory for the given language.
+        """
+        language_code=language_code.replace("_", "-")
+        lang_adapter_path = os.path.join(adapter_base_path, language_code)
+        checkpoints = [d for d in os.listdir(lang_adapter_path) if d.startswith("checkpoint")]
+        checkpoints.sort(key=lambda x: int(x.split('-')[-1]))  # Sort by checkpoint number
+        latest_checkpoint = checkpoints[-1]  # Get the latest checkpoint
+        return os.path.join(lang_adapter_path, latest_checkpoint)
+
     # prepare data
     dataset = load_dataset('Davlan/sib200', args.language)
 
@@ -132,7 +146,10 @@ def main():
     val_dataset = dataset["validation"]
     test_dataset = dataset["test"]
     
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    if "bert" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-multilingual-cased")
+    elif "xlm-r" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("FacebookAI/xlm-roberta-base")
 
     train_dataset = preprocess_dataset(train_dataset)
     val_dataset = preprocess_dataset(val_dataset)
@@ -140,17 +157,15 @@ def main():
 
     # prepare model
     config = AutoConfig.from_pretrained(args.model_name)
-    model = AutoAdapterModel.from_pretrained(args.model_name, config=config)
+    print("Model used: ", args.model_name)
 
-    def find_latest_checkpoint(adapter_base_path: str, language_code: str) -> str:
-        """
-        Finds the latest checkpoint directory for the given language.
-        """
-        lang_adapter_path = os.path.join(adapter_base_path, language_code)
-        checkpoints = [d for d in os.listdir(lang_adapter_path) if d.startswith("checkpoint")]
-        checkpoints.sort(key=lambda x: int(x.split('-')[-1]))  # Sort by checkpoint number
-        latest_checkpoint = checkpoints[-1]  # Get the latest checkpoint
-        return os.path.join(lang_adapter_path, latest_checkpoint)
+    if args.model_name!="google-bert/bert-base-multilingual-cased" or "FacebookAI/xlm-roberta-base":
+        local_name=find_latest_checkpoint(args.model_name, args.language)
+        print(local_name)
+        config = AutoConfig.from_pretrained(local_name)
+        model = AutoAdapterModel.from_pretrained(local_name, config=config)
+    else:
+        model = AutoAdapterModel.from_pretrained(args.model_name, config=config)
 
     if args.language_adapter=="yes":
         # load language adapter and add classification head for topic classification
@@ -159,6 +174,7 @@ def main():
         if args.adapter_source=="glot":
             adapter_dir = find_latest_checkpoint(args.adapter_dir, args.language)
         lang_adapter_config = AdapterConfig.load(adapter_dir + "/mlm/adapter_config.json")
+
         model.load_adapter(adapter_dir + "/mlm", config=lang_adapter_config, load_as="lang_adapter", with_head=False)
 
         model.add_adapter("topic_classification")
@@ -181,7 +197,7 @@ def main():
         per_device_train_batch_size=args.per_device_train_batch_size,
         per_device_eval_batch_size=args.per_device_eval_batch_size,
         save_strategy=args.save_strategy,
-        evaluation_strategy=args.evaluation_strategy,
+        eval_strategy=args.evaluation_strategy,
         weight_decay=args.weight_decay,
         output_dir=args.output_dir,
         overwrite_output_dir=True,

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-pip install evaluate adapters scikit-learn
+pip install adapters
+pip install evaluate
+pip install -U scikit-learn==1.5.2
 
 # Define variables
 languages=('amh_Ethi' 'uzn_Latn' 'sun_Latn' 'cym_Latn' 'mar_Deva' 
@@ -11,12 +13,13 @@ languages=('amh_Ethi' 'uzn_Latn' 'sun_Latn' 'cym_Latn' 'mar_Deva'
            'npi_Deva' 'zsm_Latn' 'bul_Cyrl' 'tel_Telu' 'ben_Beng')
 
 # Configurable parameters
-source="conceptnet"   # Can be set to "glot"
+source="glot"   # Can be set to "glot"
 model="mbert"         # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
-configuration="baseline"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
+configuration="finetune"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
 
 # Directory base path
 base_dir="/netscratch/dgurgurov/thesis/downstream_tasks/tc"
+model_dir="/ds/text/LangAdapters/model_fine-tune/$model" # google-bert/bert-base-multilingual-cased
 
 # Loop over each language and seed
 for lang in "${languages[@]}"; do
@@ -31,8 +34,8 @@ for lang in "${languages[@]}"; do
     python train_tc.py \
       --language "$lang" \
       --output_dir "$output_dir" \
-      --adapter_dir "/netscratch/dgurgurov/thesis/lang_adapters/$source/$model/$configuration" \
-      --model_name "google-bert/bert-base-multilingual-cased" \
+      --adapter_dir "/ds/text/LangAdapters/lang_adapters/$source/$model/$configuration" \
+      --model_name "$model_dir" \
       --learning_rate 1e-4 \
       --num_train_epochs 20 \
       --per_device_train_batch_size 32 \
