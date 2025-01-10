@@ -15,7 +15,7 @@ from transformers import (
     DataCollatorForTokenClassification,
     AutoModel,
 )
-from adapters import AutoAdapterModel, AdapterConfig, AdapterTrainer
+from adapters import AutoAdapterModel, AdapterConfig, AdapterTrainer, Fuse
 from adapters.composition import Stack
 
 # useful functions
@@ -24,6 +24,8 @@ def parse_arguments():
     parser.add_argument("--language", type=str, default="", help="Language at hand")
     parser.add_argument("--output_dir", type=str, default="./training_output", help="Output directory for training results")
     parser.add_argument("--adapter_dir", type=str, default="", help="Directory containing the pre-trained adapter checkpoint")
+    parser.add_argument("--adapter_cn_dir", type=str, default="", help="Directory containing the pre-trained adapter checkpoint")
+    parser.add_argument("--adapter_glot_dir", type=str, default="", help="Directory containing the pre-trained adapter checkpoint")
     parser.add_argument("--adapter_config", type=str, default="", help="Directory containing the pre-trained adapter config")
     parser.add_argument("--model_name", type=str, default="bert-base-multilingual-cased", help="Name of the pre-trained model")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for training")
@@ -52,7 +54,7 @@ def compute_metrics(p, label_names):
         [label_names[l] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
-    metric = load_metric("seqeval")
+    metric = load_metric("seqeval", trust_remote_code=True)
     results = metric.compute(predictions=true_predictions, references=true_labels)
     flattened_results = {
         "overall_precision": results["overall_precision"],
@@ -164,11 +166,68 @@ def main():
         
         # set the active adapter and enable training only for the classification head
         model.active_adapters = Stack("lang_adapter", "ner")
-    else:
+        
+    if args.language_adapter=="no":
         # no language adapter used
         model.add_adapter("ner")
         model.add_tagging_head("ner", num_labels=len(label_names), id2label=id2label)
         model.train_adapter(["ner"])
+
+    if args.language_adapter == "fusion":
+        # Find ConceptNet and Glot adapters
+        conceptnet_adapter_dir = find_latest_checkpoint(args.adapter_cn_dir, languages_mapping[args.language])
+        glot_adapter_dir = find_latest_checkpoint(args.adapter_glot_dir, args.language)
+
+        # Load both language adapters
+        conceptnet_adapter_config = AdapterConfig.load(conceptnet_adapter_dir + "/mlm/adapter_config.json")
+        glot_adapter_config = AdapterConfig.load(glot_adapter_dir + "/mlm/adapter_config.json")
+
+        model.load_adapter(conceptnet_adapter_dir + "/mlm", config=conceptnet_adapter_config, load_as="conceptnet_adapter", with_head=False)
+        model.load_adapter(glot_adapter_dir + "/mlm", config=glot_adapter_config, load_as="glot_adapter", with_head=False)
+
+        # Create fusion setup for the two loaded adapters
+        adapter_fusion_setup = Fuse("conceptnet_adapter", "glot_adapter")
+        model.add_adapter_fusion(adapter_fusion_setup)
+
+        # Initialize new task adapter 
+        task_adapter_name = "ner"
+        model.add_adapter(task_adapter_name)
+        
+        # Add task head 
+        model.add_tagging_head(
+            task_adapter_name, 
+            num_labels=len(label_names), 
+            id2label=id2label
+        )
+
+        # Create a stack combining fusion and task adapter
+        full_adapter_setup = Stack(adapter_fusion_setup, task_adapter_name)
+
+        # Train both fusion and task adapter
+        model.train_adapter(task_adapter_name)
+        model.train_adapter_fusion(adapter_fusion_setup)
+
+        # Set NER layers to trainable
+        for name, param in model.named_parameters():
+            if 'ner' in name:
+                param.requires_grad = True
+
+        model.set_active_adapters(full_adapter_setup)
+
+        # Print active adapters for verification
+        print(f"Active adapters: {model.active_adapters}")
+
+        # Verify training status for fusion
+        for name, param in model.named_parameters():
+            if 'adapter_fusion' in name:
+                print(f"{name}: requires_grad = {param.requires_grad}")
+
+        # Verify training status for NER
+        for name, param in model.named_parameters():
+            if 'ner' in name:
+                print(f"{name}: requires_grad = {param.requires_grad}")
+
+    
     
     print(model.adapter_summary())
 
