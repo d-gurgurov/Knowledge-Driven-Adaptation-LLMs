@@ -14,6 +14,7 @@ languages = [
 ]
 
 # Directory containing the TSV files
+# Download the results from here https://github.com/dadelani/SIB-200
 tsv_dir = "/Users/daniilgurgurov/Desktop/sib-200_gpt-results/output_gpt4"
 
 # To store F1-scores
