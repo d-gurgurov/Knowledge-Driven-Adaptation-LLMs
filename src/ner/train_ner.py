@@ -38,6 +38,7 @@ def parse_arguments():
     parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility")
     parser.add_argument("--language_adapter", type=str, default="yes", help="Whether to use language adapter")
     parser.add_argument("--adapter_source", type=str, default="conceptnet", help="Adapter source")
+    parser.add_argument("--configuration", type=str, default="finetune", help="Configuration")
     return parser.parse_args()
 
 args = parse_arguments()
@@ -134,17 +135,27 @@ def main():
     id2label = {id_: label for id_, label in enumerate(label_names)}
     label2id = {label: id_ for id_, label in enumerate(label_names)}
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    
+    if "Llama" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        tokenizer.pad_token = tokenizer.eos_token   
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     tokenized_dataset = dataset.map(tokenize_adjust_labels, batched=True)
 
     # prepare model
     config = AutoConfig.from_pretrained(args.model_name, id2label=id2label, label2id=label2id)
     model = AutoAdapterModel.from_pretrained(args.model_name, config=config)
 
+    if "Llama" in str(args.model_name):
+        model.config.pad_token_id = tokenizer.pad_token_id
+
     def find_latest_checkpoint(adapter_base_path: str, language_code: str) -> str:
         """
         Finds the latest checkpoint directory for the given language.
         """
+        language_code=language_code.replace("_", "-")
         lang_adapter_path = os.path.join(adapter_base_path, language_code)
         checkpoints = [d for d in os.listdir(lang_adapter_path) if d.startswith("checkpoint")]
         checkpoints.sort(key=lambda x: int(x.split('-')[-1]))  # Sort by checkpoint number
@@ -157,8 +168,8 @@ def main():
             adapter_dir = find_latest_checkpoint(args.adapter_dir, languages_mapping[args.language])
         if args.adapter_source=="glot":
             adapter_dir = find_latest_checkpoint(args.adapter_dir, args.language)
-        lang_adapter_config = AdapterConfig.load(adapter_dir + "/mlm/adapter_config.json")
-        model.load_adapter(adapter_dir + "/mlm", config=lang_adapter_config, load_as="lang_adapter", with_head=False)
+        lang_adapter_config = AdapterConfig.load(adapter_dir + "/clm/adapter_config.json")
+        model.load_adapter(adapter_dir + "/clm", config=lang_adapter_config, load_as="lang_adapter", with_head=False)
 
         model.add_adapter("ner")
         model.add_tagging_head("ner", num_labels=len(label_names), id2label=id2label)
@@ -226,7 +237,6 @@ def main():
         for name, param in model.named_parameters():
             if 'ner' in name:
                 print(f"{name}: requires_grad = {param.requires_grad}")
-
     
     
     print(model.adapter_summary())

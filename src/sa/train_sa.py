@@ -35,6 +35,8 @@ def parse_arguments():
     parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility")
     parser.add_argument("--language_adapter", type=str, default="yes", help="Whether to use language adapter")
     parser.add_argument("--adapter_source", type=str, default="conceptnet", help="Adapter source")
+    parser.add_argument("--configuration", type=str, default="finetune", help="Configuration")
+    
     return parser.parse_args()
 
 args = parse_arguments()
@@ -46,6 +48,10 @@ def encode_batch(examples):
         tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-multilingual-cased")
     elif "xlm-r" in str(args.model_name):
         tokenizer = AutoTokenizer.from_pretrained("FacebookAI/xlm-roberta-base")
+    elif "Llama" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        tokenizer.pad_token = tokenizer.eos_token   
 
     if "category" in examples:
         examples["label"] = examples.pop("category")
@@ -170,7 +176,12 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-multilingual-cased")
     elif "xlm-r" in str(args.model_name):
         tokenizer = AutoTokenizer.from_pretrained("FacebookAI/xlm-roberta-base")
-
+    elif "Llama" in str(args.model_name):
+        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B")
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        tokenizer.pad_token = tokenizer.eos_token   
+        print(tokenizer.pad_token, "pad_token------<")
+        
     train_dataset = preprocess_dataset(train_dataset)
     val_dataset = preprocess_dataset(val_dataset)
     test_dataset = preprocess_dataset(test_dataset)
@@ -179,7 +190,7 @@ def main():
     config = AutoConfig.from_pretrained(args.model_name)
     print("Model used: ", args.model_name)
 
-    if args.model_name!="google-bert/bert-base-multilingual-cased" or "FacebookAI/xlm-roberta-base":
+    if args.configuration=="finetune":
         local_name=find_latest_checkpoint(args.model_name, args.language)
         print(local_name)
         config = AutoConfig.from_pretrained(local_name)
@@ -193,8 +204,9 @@ def main():
             adapter_dir = find_latest_checkpoint(args.adapter_dir, languages_mapping[args.language])
         if args.adapter_source=="glot":
             adapter_dir = find_latest_checkpoint(args.adapter_dir, args.language)
-        lang_adapter_config = AdapterConfig.load(adapter_dir + "/mlm/adapter_config.json")
-        model.load_adapter(adapter_dir + "/mlm", config=lang_adapter_config, load_as="lang_adapter", with_head=False)
+        lang_adapter_config = AdapterConfig.load(adapter_dir + "/clm/adapter_config.json")
+        
+        model.load_adapter(adapter_dir + "/clm", config=lang_adapter_config, load_as="lang_adapter", with_head=False)
 
         model.add_adapter("sentiment_classification")
         model.add_classification_head("sentiment_classification", num_labels=2)
@@ -208,6 +220,9 @@ def main():
         model.add_classification_head("sentiment_classification", num_labels=2)
         model.train_adapter(["sentiment_classification"])
     
+    if "Llama" in str(args.model_name):
+        model.config.pad_token_id = tokenizer.pad_token_id
+        
     print(model.adapter_summary())
 
     training_args = TrainingArguments(
