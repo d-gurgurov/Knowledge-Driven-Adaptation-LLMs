@@ -84,7 +84,7 @@ def evaluate_language(language, model, tokenizer):
         torch.cuda.empty_cache()
     
     # Save results to JSONL file
-    with open(f'llama_70b/{language}_results.jsonl', 'w') as f:
+    with open(f'qwen_7b/{language}_results.jsonl', 'w') as f:
         for item in results:
             f.write(json.dumps(item) + '\n')
     
@@ -107,7 +107,7 @@ def main():
         'npi_Deva', 'zsm_Latn', 'bul_Cyrl', 'tel_Telu', 'ben_Beng'
     ]
 
-    model_name = "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+    model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     # deepseek-ai/DeepSeek-R1-Distill-Llama-8B
     # deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
     # deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
@@ -127,7 +127,7 @@ def main():
         results[lang] = f1
         print(f"F1-score for {lang}: {f1}")
 
-    with open('llama_70b/sib200_evaluation_results.json', 'w') as f:
+    with open('qwen_7b/sib200_evaluation_results.json', 'w') as f:
         json.dump(results, f, indent=2)
 
 
