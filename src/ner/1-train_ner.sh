@@ -1,6 +1,10 @@
 #!/bin/bash
 
-pip install evaluate adapters scikit-learn seqeval
+pip install evaluate adapters seqeval
+pip install -U scikit-learn==1.5.2
+
+huggingface-cli login --token blabla --add-to-git-credential
+
 
 # Define variables
 all_languages=(
@@ -12,12 +16,12 @@ all_languages=(
     'uig_Arab' 'urd_Arab' 'uzn_Latn' 'yor_Latn' 'zsm_Latn'
 )
 
-all_languages=('tha_Thai' 'uig_Arab' 'urd_Arab' 'uzn_Latn' 'yor_Latn' 'zsm_Latn')
+all_languages=('mlt_Latn' 'sin_Sinh' 'uig_Arab' 'swh_Latn' 'cym_Latn')
 
 
 # Configurable parameters
 source="glot"   # Can be set to "glot"
-model="xlm-r"         # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
+model="llama3"         # FacebookAI/xlm-roberta-base google-bert/bert-base-multilingual-cased
 configuration="seq_bn_inv"  # Can be set to "seq_bn", "seq_bn_inv", or "lora"
 
 # Directory base path
@@ -27,7 +31,7 @@ base_dir="/netscratch/dgurgurov/thesis/downstream_tasks/ner"
 for lang in "${all_languages[@]}"; do
   for seed in 1 2 3; do
     # Define output directory
-    output_dir="${base_dir}/${source}/${model}/fusion/${configuration}/${lang}/${seed}"
+    output_dir="${base_dir}/${source}/${model}/${configuration}/${lang}/${seed}"
 
     # Create the output directory if it doesn't exist
     mkdir -p "$output_dir"
@@ -36,19 +40,20 @@ for lang in "${all_languages[@]}"; do
     python train_ner.py \
       --language "$lang" \
       --output_dir "$output_dir" \
-      --adapter_dir "/ds/text/ConceptNet/lang_adapters/$source/$model/$configuration" \
+      --adapter_dir "/netscratch/dgurgurov/thesis/src/mlm/lang_adapters/$source/$model/$configuration" \
       --adapter_cn_dir "/ds/text/ConceptNet/lang_adapters/conceptnet/$model/$configuration" \
-      --adapter_glot_dir "/ds/text/ConceptNet/lang_adapters/glot/$model/$configuration" \
-      --model_name "FacebookAI/xlm-roberta-base" \
-      --learning_rate 1e-4 \
-      --num_train_epochs 100 \
-      --per_device_train_batch_size 32 \
-      --per_device_eval_batch_size 32 \
+      --adapter_glot_dir "/netscratch/dgurgurov/thesis/src/mlm/lang_adapters/glot/$model/$configuration" \
+      --model_name "meta-llama/Meta-Llama-3-8B" \
+      --learning_rate 2e-5 \
+      --num_train_epochs 25 \
+      --per_device_train_batch_size 8 \
+      --per_device_eval_batch_size 8 \
       --evaluation_strategy "epoch" \
       --save_strategy "epoch" \
       --weight_decay 0.01 \
       --seed "$seed" \
-      --language_adapter "fusion" \
-      --adapter_source "$source"
+      --language_adapter "yes" \
+      --adapter_source "$source" \
+      --configuration "no_finetune"
   done
 done
