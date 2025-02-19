@@ -1,4 +1,4 @@
-# External Knowledge-Driven Adaptation of Multilingual Language Models for Low-Resource Languages
+# Small Models, Big Impact
 
 [![arXiv](https://img.shields.io/badge/arXiv-2502.10140v1-b31b1b.svg)](https://arxiv.org/abs/2502.10140)
 
