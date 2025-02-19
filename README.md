@@ -6,11 +6,11 @@ This repository contains the code and data associated with my master's thesis, w
 
 The core of this research lies in developing and experimenting with language adapters trained on both structured and unstructured data sources:
 - **Structured Knowledge:** ConceptNet, a semantic network that provides valuable relational knowledge.
-- **Unstructured Data:** OSCAR, a large-scale corpus of multilingual web text.
+- **Unstructured Data:** GlotCC, a large-scale corpus of multilingual web text.
 
 ### Key Components
 
-1. **Language Adapters:** Specialized adapters are trained to capture language-specific knowledge from ConceptNet and OSCAR.
+1. **Language Adapters:** Specialized adapters are trained to capture language-specific knowledge from ConceptNet and GlotCC.
 2. **Adapter Fusion:** During inference, these adapters are dynamically combined using Adapter Fusion to leverage the strengths of both knowledge sources.
 3. **Task-Specific Fine-Tuning:** Task-specific adapters are used to fine-tune models for Sentiment Analysis (SA) and Named Entity Recognition (NER) tasks.
 4. **Modular Design:** The approach allows for flexible experimentation with different adapter architectures, including Sequential Bottleneck, Invertible Layers, and LoRA, to enhance model performance across 30 diverse LRLs.
@@ -27,6 +27,16 @@ The evaluation of these methods is conducted on datasets representing a wide arr
 - `results/`: Evaluation results, including performance metrics and visualizations.
 - `docs/`: Documentation and additional resources.
 
-## Thesis Proposal Presentation
+## Citation
 
-For a detailed overview of the methodology and findings, you can view the presentation [here](https://docs.google.com/presentation/d/1947oa8Ty7JFFKobqjeL-MfWFb5Ycugt3l5s_-POWsak/edit?usp=sharing).
+```bibtex
+@misc{gurgurov2025smallmodelsbigimpact,
+      title={Small Models, Big Impact: Efficient Corpus and Graph-Based Adaptation of Small Multilingual Language Models for Low-Resource Languages}, 
+      author={Daniil Gurgurov and Ivan Vykopal and Josef van Genabith and Simon Ostermann},
+      year={2025},
+      eprint={2502.10140},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2502.10140}, 
+}
+```
