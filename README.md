@@ -2,7 +2,13 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2502.10140v1-b31b1b.svg)](https://arxiv.org/abs/2502.10140)
 
-This repository contains the code, data, and models (soon!) associated with the paper "Small Models, Big Impact: Efficient Corpus and Graph-Based Adaptation of Small Multilingual Language Models for Low-Resource Languages," focusing on enhancing multilingual Language Models (mLMs) for low-resource languages (LRLs). LRLs often face significant challenges in natural language processing (NLP) due to the scarcity of data. We explore parameter-efficient adaptation of small mLMs for LRLs, comparing adapters, continued pre-training, and large-scale LM prompting. Our findings show that: (1) limited adaptation data (≤1 GB text or a few MB of KG data) provides significant gains, with Sequential Bottleneck excelling in MLM and Invertible Bottleneck in downstream tasks; (2) smaller mLMs like XLM-R outperform massive LLMs (e.g., GPT-3.5, LLaMA-3) for LRLs; (3) pre-training data size strongly influences performance, with adaptation yielding diminishing returns for the languages with the extensive inclusion in a mode's pre-training data.
+This repository contains the code, data, and models (soon!) associated with the paper "Small Models, Big Impact: Efficient Corpus and Graph-Based Adaptation of Small Multilingual Language Models for Low-Resource Languages," focusing on enhancing multilingual Language Models (mLMs) for low-resource languages (LRLs). LRLs often face significant challenges in natural language processing (NLP) due to the scarcity of data. 
+
+We explore parameter-efficient adaptation of small mLMs for LRLs, comparing adapters, continued pre-training, and large-scale LM prompting. Our findings show that: 
+
+- (1) limited adaptation data (≤1 GB text or a few MB of KG data) provides significant gains, with Sequential Bottleneck excelling in MLM and Invertible Bottleneck in downstream tasks;
+- (2) smaller mLMs like XLM-R outperform massive LLMs (e.g., GPT-3.5, LLaMA-3) for LRLs;
+- (3) pre-training data size strongly influences performance, with adaptation yielding diminishing returns for the languages with the extensive inclusion in a mode's pre-training data.
 
 ## [Overview](pplx://action/followup)
 
@@ -13,11 +19,6 @@ This research develops and experiments with language adapters trained on both st
 
 We systematically investigate parameter-efficient adapter-based methods for adapting mLMs to LRLs, evaluating three architectures: Sequential Bottleneck, Invertible Bottleneck, and Low-Rank Adaptation.
 
-## [Key Contributions](pplx://action/followup)
-
-*   Demonstrated that limited adaptation data yields significant gains for LRLs (up to 1 GB of free text or a few MB of KG data).
-*   Showed the effectiveness of smaller mLMs, such as XLM-R, for LRLs, outperforming both few-shot prompting and adaptation of massive SoTA LLMs.
-*   Analyzed 30 LRLs, revealing a direct relationship between pre-training and adaptation data size and performance, with adaptation data providing diminishing returns for languages with larger pre-training data coverage.
 
 ## [Experimental Setup](pplx://action/followup)
 
@@ -32,16 +33,6 @@ We systematically investigate parameter-efficient adapter-based methods for adap
     *   Topic Classification (TC): Evaluated using the 7-class SIB-200 dataset.
     *   Sentiment Analysis (SA): Evaluated using binary-class datasets from multiple sources.
     *   Named Entity Recognition (NER): Evaluated using the WikiANN dataset.
-
-## [Results](pplx://action/followup)
-
-Key results demonstrating the effectiveness of adapter-based adaptation:
-
-*   **[MLM](pplx://action/followup):** Glot-based adapters substantially improved pseudo-perplexity, particularly for mBERT, with the Seq\_bn adapter achieving the largest reduction.
-*   **[Downstream Tasks (TC, SA, NER)](pplx://action/followup):** Adapter-based methods often matched or outperformed full fine-tuning while using far fewer parameters. Invertible Bottleneck adapters slightly outperformed other methods on downstream tasks due to better embedding alignment and larger parameter counts.
-*   Smaller mLMs (XLM-R) proved more effective for LRLs than massive LLMs like LLaMA-3.
-
-Refer to Tables 1 and 3 in the paper for detailed results across all tasks and models.
 
 ## [Citation](pplx://action/followup)
 
@@ -59,7 +50,7 @@ Refer to Tables 1 and 3 in the paper for detailed results across all tasks and m
 
 ## [Acknowledgements](pplx://action/followup)
 
-*   This work was supported by [DisAI](https://disai.eu/), improving scientific excellence and creativity in combating disinformation with artificial intelligence and language technologies, a Horizon Europe-funded project under GA No. 101079164.
+*   This work was supported by [DisAI](https://disai.eu/).
 *   We thank the open-source community for providing valuable resources and tools.
 
 ## [Contact](pplx://action/followup)
